@@ -76,20 +76,29 @@ class WorkoutTimerService : LifecycleService() {
                 b.setContentTitle(getString(R.string.timer_hold_title, Format.duration(el)))
                     .setContentText(s.label)
             }
-            is TimerState.Interval -> {
-                val pos = IntervalProgram.locate(s.phases, s.elapsedMs(now))
-                val phaseName = getString(
-                    when (pos.phase.kind) {
-                        PhaseKind.PREP -> R.string.timer_phase_prep
-                        PhaseKind.WORK -> R.string.timer_phase_work
-                        PhaseKind.REST -> R.string.timer_phase_rest
-                    },
-                )
-                b.setContentTitle("$phaseName ${Format.duration((pos.remainingMs + 999) / 1000)}")
-                    .setContentText(getString(R.string.timer_round, pos.phase.round.coerceAtLeast(1), pos.phase.totalRounds) + if (s.pausedAt != null) " · " + getString(R.string.timer_paused) else "")
+            is TimerState.Interval -> phaseText(b, s.phases, s.elapsedMs(now), s.pausedAt != null)
+            is TimerState.Program -> phaseText(b, s.phases, s.elapsedMs(now), s.pausedAt != null)
+            is TimerState.Stopwatch -> {
+                b.setContentTitle(getString(R.string.timer_stopwatch_title, Format.duration(s.elapsedMs(now) / 1000)))
+                    .setContentText(if (s.pausedAt != null) getString(R.string.timer_paused) else getString(R.string.app_name))
             }
             TimerState.Idle -> b.setContentTitle(getString(R.string.app_name))
         }
         return b
+    }
+
+    private fun phaseText(b: NotificationCompat.Builder, phases: List<com.gowaist.core.timer.Phase>, elapsedMs: Long, paused: Boolean) {
+        val pos = IntervalProgram.locate(phases, elapsedMs)
+        val phaseName = getString(
+            when (pos.phase.kind) {
+                PhaseKind.PREP -> R.string.timer_phase_prep
+                PhaseKind.WARMUP -> R.string.timer_phase_warmup
+                PhaseKind.WORK -> R.string.timer_phase_work
+                PhaseKind.REST -> R.string.timer_phase_rest
+                PhaseKind.COOLDOWN -> R.string.timer_phase_cooldown
+            },
+        )
+        b.setContentTitle("$phaseName ${Format.duration((pos.remainingMs + 999) / 1000)}")
+            .setContentText(getString(R.string.timer_round, pos.phase.round.coerceAtLeast(1), pos.phase.totalRounds) + if (paused) " · " + getString(R.string.timer_paused) else "")
     }
 }

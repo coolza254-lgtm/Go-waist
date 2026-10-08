@@ -1,5 +1,6 @@
 package com.gowaist.app.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -15,6 +16,7 @@ import com.gowaist.core.model.PlanDayType
 import com.gowaist.core.model.PrType
 import com.gowaist.core.model.SetType
 import com.gowaist.core.model.TrackingType
+import com.gowaist.core.perf.RunType
 import kotlinx.serialization.Serializable
 
 /*
@@ -38,6 +40,12 @@ data class RunEntity(
     val tags: List<String> = emptyList(),
     val sourceImagePath: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
+    /** Program that recorded the run (v3). */
+    @ColumnInfo(defaultValue = "FREE") val runType: RunType = RunType.FREE,
+    /** Perceived effort 1–10 (v3). */
+    val rpe: Double? = null,
+    /** Interval session details as JSON [com.gowaist.core.perf.IntervalResult] (v3). */
+    val intervalJson: String? = null,
 )
 
 @Serializable

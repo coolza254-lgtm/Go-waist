@@ -38,6 +38,23 @@ class MigrationTest {
         db.close()
     }
 
+    @Test
+    fun migrate2To3AddsRunProgramColumns() {
+        helper.createDatabase(DB, 2).use { db ->
+            db.execSQL(
+                "INSERT INTO runs (id, startAt, localDate, distanceM, durationSec, avgPaceSecPerKm, note, tags, createdAt) " +
+                    "VALUES (1, 1000, '2026-10-05', 2400.0, 720, 300.0, '', '[]', 1000)",
+            )
+        }
+        val db = helper.runMigrationsAndValidate(DB, 3, true, *Migrations.ALL)
+        db.query("SELECT runType, rpe FROM runs WHERE id = 1").use { c ->
+            c.moveToFirst()
+            assertEquals("FREE", c.getString(0))
+            assertEquals(true, c.isNull(1))
+        }
+        db.close()
+    }
+
     private companion object {
         const val DB = "migration-test"
     }

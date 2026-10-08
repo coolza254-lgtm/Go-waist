@@ -53,6 +53,31 @@ sealed interface TimerState {
     ) : TimerState {
         fun elapsedMs(now: Long) = ((pausedAt ?: now) - startAt - pausedTotalMs).coerceAtLeast(0)
     }
+
+    /** Guided running program (Cooper test, interval run) made of timed phases. */
+    data class Program(
+        val tag: String,
+        val phases: List<Phase>,
+        val startAt: Long,
+        val wallStart: Long,
+        val pausedAt: Long? = null,
+        val pausedTotalMs: Long = 0,
+        val finished: Boolean = false,
+    ) : TimerState {
+        fun elapsedMs(now: Long) = ((pausedAt ?: now) - startAt - pausedTotalMs).coerceAtLeast(0)
+    }
+
+    /** Count-up timer for free runs, with an optional target that triggers an alert. */
+    data class Stopwatch(
+        val tag: String,
+        val startAt: Long,
+        val wallStart: Long,
+        val targetSec: Int? = null,
+        val pausedAt: Long? = null,
+        val pausedTotalMs: Long = 0,
+    ) : TimerState {
+        fun elapsedMs(now: Long) = ((pausedAt ?: now) - startAt - pausedTotalMs).coerceAtLeast(0)
+    }
 }
 
 /**
@@ -107,10 +132,36 @@ class TimerController @Inject constructor(
         set(TimerState.Interval(config, IntervalProgram.phases(config), SystemClock.elapsedRealtime()))
     }
 
-    fun togglePause() {
-        val s = _state.value as? TimerState.Interval ?: return
+    fun startProgram(tag: String, phases: List<Phase>) {
+        lastPhaseIndex = -1
+        set(TimerState.Program(tag, phases, SystemClock.elapsedRealtime(), System.currentTimeMillis()))
+    }
+
+    fun startStopwatch(tag: String, targetSec: Int?) {
+        holdTargetAlerted = false
+        set(TimerState.Stopwatch(tag, SystemClock.elapsedRealtime(), System.currentTimeMillis(), targetSec))
+    }
+
+    /** Ends a stopwatch or program early and returns the active (unpaused) seconds. */
+    fun finishActive(): Long {
         val now = SystemClock.elapsedRealtime()
-        set(if (s.pausedAt == null) s.copy(pausedAt = now) else s.copy(pausedAt = null, pausedTotalMs = s.pausedTotalMs + (now - s.pausedAt)))
+        val sec = when (val s = _state.value) {
+            is TimerState.Stopwatch -> s.elapsedMs(now) / 1000
+            is TimerState.Program -> s.elapsedMs(now) / 1000
+            else -> 0
+        }
+        set(TimerState.Idle)
+        return sec
+    }
+
+    fun togglePause() {
+        val now = SystemClock.elapsedRealtime()
+        when (val s = _state.value) {
+            is TimerState.Interval -> set(if (s.pausedAt == null) s.copy(pausedAt = now) else s.copy(pausedAt = null, pausedTotalMs = s.pausedTotalMs + (now - s.pausedAt)))
+            is TimerState.Program -> set(if (s.pausedAt == null) s.copy(pausedAt = now) else s.copy(pausedAt = null, pausedTotalMs = s.pausedTotalMs + (now - s.pausedAt)))
+            is TimerState.Stopwatch -> set(if (s.pausedAt == null) s.copy(pausedAt = now) else s.copy(pausedAt = null, pausedTotalMs = s.pausedTotalMs + (now - s.pausedAt)))
+            else -> Unit
+        }
     }
 
     fun stop() {
@@ -120,7 +171,7 @@ class TimerController @Inject constructor(
     private fun set(s: TimerState) {
         _state.value = s
         _now.value = SystemClock.elapsedRealtime()
-        if (s is TimerState.Idle || (s is TimerState.Interval && s.finished)) {
+        if (s is TimerState.Idle || (s is TimerState.Interval && s.finished) || (s is TimerState.Program && s.finished)) {
             ticker?.cancel()
             ticker = null
             context.stopService(Intent(context, WorkoutTimerService::class.java))
@@ -145,24 +196,40 @@ class TimerController @Inject constructor(
                     holdTargetAlerted = true
                     alert(long = false)
                 }
-                is TimerState.Interval -> if (s.pausedAt == null) {
-                    val pos = IntervalProgram.locate(s.phases, s.elapsedMs(now))
-                    if (pos.finished) {
-                        alert(long = true)
-                        set(s.copy(finished = true))
-                        return
-                    }
-                    if (pos.phaseIndex != lastPhaseIndex) {
-                        if (lastPhaseIndex >= 0) alert(long = pos.phase.kind == PhaseKind.WORK)
-                        lastPhaseIndex = pos.phaseIndex
-                    } else if (pos.remainingMs in 2_500..3_000 && pos.phase.durationSec > 5) {
-                        beep(short = true) // 3-2-1 warning
-                    }
+                is TimerState.Interval -> if (s.pausedAt == null && phaseTick(s.phases, s.elapsedMs(now))) {
+                    set(s.copy(finished = true))
+                    return
+                }
+                is TimerState.Program -> if (s.pausedAt == null && phaseTick(s.phases, s.elapsedMs(now))) {
+                    set(s.copy(finished = true))
+                    return
+                }
+                is TimerState.Stopwatch -> if (s.targetSec != null && !holdTargetAlerted && s.elapsedMs(now) >= s.targetSec * 1000L) {
+                    holdTargetAlerted = true
+                    alert(long = true)
                 }
                 TimerState.Idle -> return
             }
             delay(250)
         }
+    }
+
+    /** Alerts on phase changes and the last seconds of a phase; returns true when all phases are done. */
+    private fun phaseTick(phases: List<Phase>, elapsedMs: Long): Boolean {
+        val pos = IntervalProgram.locate(phases, elapsedMs)
+        if (pos.finished) {
+            alert(long = true)
+            return true
+        }
+        if (pos.phaseIndex != lastPhaseIndex) {
+            if (lastPhaseIndex >= 0) alert(long = pos.phase.kind == PhaseKind.WORK)
+            lastPhaseIndex = pos.phaseIndex
+        } else if (pos.remainingMs in 2_500..3_000 && pos.phase.durationSec > 5) {
+            beep(short = true) // 3-2-1 warning
+        } else if (pos.phase.durationSec >= 300 && pos.remainingMs in 59_750..60_000) {
+            beep(short = true) // one minute left in long phases (Cooper test)
+        }
+        return false
     }
 
     private fun postRestDone(label: String) {

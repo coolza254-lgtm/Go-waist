@@ -216,4 +216,41 @@ class RunTextParserTest {
         val r = parser.parse("6.20 km\n5:50 /km")
         assertEquals(350.0, r.paceSecPerKm!!.value, 0.5)
     }
+
+    /** Samsung Health share card (Thai UI): pace/HR chart axes, mm:ss duration, Thai month lost by OCR. */
+    @Test
+    fun `samsung health thai share card with charts`() {
+        val merged = """
+            Samsung Health  5 a.A. 17:36
+            O ทำว @ อัตราการเต้นของหัวใจ
+            /km  bpm
+            04'53"  197
+            06'37"  181
+            08'21"  165
+            10'05"  149
+            11'50"  133
+            13'34"  117
+            15'18"  101
+            00:00  08:53  17:46  26:39
+            35:34  4.14 km  148 bpm
+        """.trimIndent()
+        val r = parser.parse(merged)
+        assertEquals(4140.0, r.distanceM!!.value, 0.5)
+        assertEquals(35 * 60 + 34L, r.durationSec!!.value)
+        assertEquals(Confidence.HIGH, r.durationSec!!.confidence)
+        assertEquals(148, r.avgHr!!.value)
+        // Chart ticks are ignored; pace comes from distance and time.
+        assertEquals(2134 / 4.14, r.paceSecPerKm!!.value, 0.5)
+        assertEquals(Confidence.LOW, r.paceSecPerKm!!.confidence)
+        assertEquals(LocalDate.of(2026, 10, 5), r.date!!.value)
+        assertEquals(LocalTime.of(17, 36), r.time!!.value)
+
+        // Same card when OCR returns every label on its own line.
+        val split = merged.lines().flatMap { it.split("  ") }.joinToString("\n")
+        val r2 = parser.parse(split)
+        assertEquals(4140.0, r2.distanceM!!.value, 0.5)
+        assertEquals(2134L, r2.durationSec!!.value)
+        assertEquals(148, r2.avgHr!!.value)
+        assertEquals(LocalDate.of(2026, 10, 5), r2.date!!.value)
+    }
 }

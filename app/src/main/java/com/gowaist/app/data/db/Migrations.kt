@@ -19,5 +19,14 @@ object Migrations {
         }
     }
 
-    val ALL: Array<Migration> = arrayOf(MIGRATION_1_2)
+    /** v3: run programs (Cooper, interval, free, long run) with effort and interval details. */
+    val MIGRATION_2_3 = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `runs` ADD COLUMN `runType` TEXT NOT NULL DEFAULT 'FREE'")
+            db.execSQL("ALTER TABLE `runs` ADD COLUMN `rpe` REAL")
+            db.execSQL("ALTER TABLE `runs` ADD COLUMN `intervalJson` TEXT")
+        }
+    }
+
+    val ALL: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
 }

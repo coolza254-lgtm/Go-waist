@@ -60,6 +60,7 @@ data class BackupFile(
     val bodyMetrics: List<BodyMetricEntity> = emptyList(),
     val records: List<PersonalRecordEntity> = emptyList(),
     val suggestions: List<SuggestionStateEntity> = emptyList(),
+    val programs: ProgramState = ProgramState(),
 ) {
     companion object {
         const val FORMAT = "gowaist-backup"
@@ -75,6 +76,7 @@ class BackupRepository @Inject constructor(
     private val db: GoWaistDatabase,
     private val settings: SettingsRepository,
     private val seeder: Seeder,
+    private val programs: ProgramRepository,
 ) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; prettyPrint = false }
 
@@ -98,6 +100,7 @@ class BackupRepository @Inject constructor(
             bodyMetrics = db.bodyDao().getAll(),
             records = db.recordDao().getAll(),
             suggestions = db.suggestionDao().getAll(),
+            programs = programs.current(),
         )
     }
 
@@ -152,6 +155,7 @@ class BackupRepository @Inject constructor(
             db.suggestionDao().insertAll(file.suggestions)
         }
         settings.replace(file.settings.copy(onboardingDone = true))
+        programs.replace(file.programs)
         seeder.ensureSeeded()
     }
 

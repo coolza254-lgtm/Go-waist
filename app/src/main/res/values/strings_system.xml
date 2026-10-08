@@ -15,6 +15,9 @@
     <string name="timer_phase_prep">เตรียมตัว</string>
     <string name="timer_phase_work">ลุย!</string>
     <string name="timer_phase_rest">พัก</string>
+    <string name="timer_phase_warmup">วอร์มอัพ</string>
+    <string name="timer_phase_cooldown">คูลดาวน์</string>
+    <string name="timer_stopwatch_title">กำลังวิ่ง %1$s</string>
     <string name="timer_round">รอบ %1$d/%2$d</string>
     <string name="timer_paused">หยุดชั่วคราว</string>
 

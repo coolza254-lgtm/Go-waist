@@ -183,18 +183,39 @@ class RunTextParser(private val today: LocalDate = LocalDate.now()) {
             val best = candidates.maxBy { it.value }
             return Parsed(best.value, if (candidates.size == 1) Confidence.HIGH else Confidence.LOW)
         }
-        // mm:ss only accepted next to a duration label (otherwise it may be a clock time or pace).
+        // mm:ss without hours (e.g. Samsung Health "35:34"). Skip clock times, pace values, the
+        // date/time header and chart axes (rows with several time ticks).
+        val ms = mutableListOf<Candidate<Long>>()
         lines.forEachIndexed { i, line ->
-            if (hasLabel(lines, i, DURATION_WORDS)) {
-                val target = MS_COLON.find(line.text)?.takeUnless { isPaceContext(line.text, it.range.last) || isClockTime(line.text, it.range.last) }
-                    ?: lines.getOrNull(i + 1)?.let { next -> MS_COLON.matchEntire(next.text.trim()) }
-                target?.let { m ->
+            val t = line.text
+            if (isHeaderClockLine(lines, i)) return@forEachIndexed
+            val matches = MS_COLON.findAll(t).filter { !isPaceContext(t, it.range.last) && !isClockTime(t, it.range.last) }.toList()
+            if (matches.size >= 3) return@forEachIndexed // time axis of a chart
+            matches.forEach { m ->
+                val sec = m.groupValues[1].toLong() * 60 + m.groupValues[2].toLong()
+                if (sec > 0) {
+                    val strong = hasLabel(lines, i, DURATION_WORDS) || DISTANCE_WITH_UNIT.containsMatchIn(t) || BPM.containsMatchIn(t)
+                    ms += Candidate(sec, i, strong, false, false)
+                }
+            }
+            // A label alone on its line with the value on the next line.
+            if (matches.isEmpty() && hasLabel(lines, i, DURATION_WORDS)) {
+                lines.getOrNull(i + 1)?.let { next -> MS_COLON.matchEntire(next.text.trim()) }?.let { m ->
                     val sec = m.groupValues[1].toLong() * 60 + m.groupValues[2].toLong()
-                    if (sec > 0) return Parsed(sec, Confidence.LOW)
+                    if (sec > 0) ms += Candidate(sec, i + 1, true, false, false)
                 }
             }
         }
+        ms.filter { it.labeled }.maxByOrNull { it.value }?.let { return Parsed(it.value, Confidence.HIGH) }
+        ms.maxByOrNull { it.value }?.let { return Parsed(it.value, Confidence.LOW) }
         return null
+    }
+
+    /** "5 ต.ค. 17:36" style header near the top: a day number, a word and a clock time. */
+    private fun isHeaderClockLine(lines: List<Line>, i: Int): Boolean {
+        val t = lines[i].text
+        if (ISO_DATE.containsMatchIn(t) || NUMERIC_DATE.containsMatchIn(t)) return true
+        return i <= 3 && HEADER_DATE_TIME.containsMatchIn(t)
     }
 
     private fun isClockTime(text: String, endIndex: Int): Boolean {
@@ -232,8 +253,11 @@ class RunTextParser(private val today: LocalDate = LocalDate.now()) {
                 }
             }
         }
-        if (candidates.isEmpty()) return null
         candidates.firstOrNull { it.avg && !it.max && it.labeled }?.let { return Parsed(it.value, Confidence.HIGH) }
+        // Three or more unlabelled paces on separate lines are the tick labels of a pace chart.
+        val unlabelled = candidates.filter { !it.avg }
+        if (unlabelled.map { it.line }.distinct().size >= 3) candidates.removeAll(unlabelled)
+        if (candidates.isEmpty()) return null
         val pool = candidates.filter { !it.max }.ifEmpty { candidates }
         if (computed != null) {
             val closest = pool.minBy { abs(it.value - computed) }
@@ -286,6 +310,23 @@ class RunTextParser(private val today: LocalDate = LocalDate.now()) {
             date = Parsed(d.first, if (d.second) Confidence.HIGH else Confidence.LOW)
             dateLine = line.index
             break
+        }
+        if (date == null) {
+            // Month name not readable (e.g. Thai "ต.ค." through the Latin recognizer): keep the
+            // day number and assume the most recent such day.
+            for (line in lines.take(4)) {
+                val m = HEADER_DATE_TIME.find(line.text) ?: continue
+                val day = m.groupValues[1].toInt()
+                if (day !in 1..31) continue
+                var d = today
+                var guard = 0
+                while (d.dayOfMonth != day && guard < 62) { d = d.minusDays(1); guard++ }
+                if (d.dayOfMonth == day) {
+                    date = Parsed(d, Confidence.LOW)
+                    dateLine = line.index
+                }
+                break
+            }
         }
         var time: Parsed<LocalTime>? = null
         val order = if (dateLine >= 0) listOf(dateLine, dateLine + 1, dateLine - 1).filter { it in lines.indices } else emptyList()
@@ -418,6 +459,7 @@ class RunTextParser(private val today: LocalDate = LocalDate.now()) {
         private val DAY_MONTH_NAME = Regex("\\b(\\d{1,2})\\s+$MONTH_RX,?(?:\\s+(\\d{4}))?")
         private val MONTH_NAME_DAY = Regex("\\b$MONTH_RX\\s+(\\d{1,2})(?!\\d)(?:,?\\s+(\\d{4}))?")
         private val THAI_DATE = Regex("(\\d{1,2})\\s*((?:[ก-๙]{1,2}\\.\\s?){2}|[ก-๙]{4,})\\s*(\\d{2,4})?")
+        private val HEADER_DATE_TIME = Regex("(?<![\\d:.])(\\d{1,2})\\s+[^\\s\\d:]{1,12}\\s+(\\d{1,2}):([0-5]\\d)(?![\\d:])")
         private val CLOCK = Regex("(?<![\\d.])(\\d{1,2}):([0-5]\\d)\\s*(am|pm|a\\.m\\.|p\\.m\\.)?")
 
         private val MONTHS = listOf("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")

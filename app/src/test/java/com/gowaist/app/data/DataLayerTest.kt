@@ -157,7 +157,7 @@ class DataLayerTest {
 
     @Test
     fun backupRoundTripRestoresEverything() = runTest {
-        val backup = BackupRepository(context, db, settings, seeder)
+        val backup = BackupRepository(context, db, settings, seeder, com.gowaist.app.data.repo.ProgramRepository(context))
         val session = logSession(1, listOf(8, 9))
         workouts.finish(session, 3, "x")
         runs.save(RunEntity(startAt = 1_000, localDate = "2026-10-01", distanceM = 4200.0, durationSec = 1500, avgPaceSecPerKm = 357.0, tags = listOf("เช้า", "ฝนตก")))
