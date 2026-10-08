@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="run_title">การวิ่ง</string>
+    <string name="run_tab_history">ประวัติ</string>
+    <string name="run_tab_stats">สถิติ</string>
+    <string name="run_tab_calendar">ปฏิทิน</string>
+    <string name="run_add">เพิ่มการวิ่ง</string>
+    <string name="run_import">นำเข้าจากภาพ</string>
+    <string name="run_manual">กรอกเอง</string>
+    <string name="run_search_hint">ค้นหาโน้ตหรือแท็ก</string>
+    <string name="run_range_all">ทั้งหมด</string>
+    <string name="run_range_week">สัปดาห์นี้</string>
+    <string name="run_range_month">เดือนนี้</string>
+    <string name="run_range_year">ปีนี้</string>
+    <string name="run_range_custom">กำหนดช่วง</string>
+    <string name="run_empty_title">ยังไม่มีผลวิ่ง</string>
+    <string name="run_empty_text">นำเข้าภาพสรุปจาก Samsung Health หรือกรอกเองก็ได้</string>
+    <string name="run_empty_filter">ไม่พบการวิ่งในช่วงที่เลือก</string>
+    <string name="run_count">%1$d ครั้ง</string>
+
+    <string name="run_stats_week">สัปดาห์</string>
+    <string name="run_stats_month">เดือน</string>
+    <string name="run_stats_year">ปี</string>
+    <string name="run_total_distance">ระยะรวม</string>
+    <string name="run_total_runs">จำนวนครั้ง</string>
+    <string name="run_avg_pace">เพซเฉลี่ย</string>
+    <string name="run_longest">ไกลสุด</string>
+    <string name="run_total_time">เวลารวม</string>
+    <string name="run_pbs">Personal Best</string>
+    <string name="run_pb_note">ประมาณจากเพซเฉลี่ยของการวิ่งที่ยาวพอ</string>
+    <string name="run_pb_none">ยังไม่มีข้อมูลพอ</string>
+    <string name="run_weekly_chart">ระยะต่อสัปดาห์ (12 สัปดาห์)</string>
+    <string name="run_pace_chart">เพซแต่ละครั้ง (ล่าสุด 20 ครั้ง)</string>
+    <string name="run_fastest">เพซเร็วสุด</string>
+    <string name="run_streak">วันวิ่ง/ฝึกต่อเนื่อง</string>
+    <string name="run_no_runs_day">ไม่มีการวิ่งวันนี้</string>
+
+    <string name="run_edit_title">แก้ไขการวิ่ง</string>
+    <string name="run_new_title">บันทึกการวิ่ง</string>
+    <string name="run_review_title">ตรวจผลจากภาพ (%1$d/%2$d)</string>
+    <string name="run_date">วันที่</string>
+    <string name="run_time">เวลาเริ่ม</string>
+    <string name="run_time_unknown">ไม่ระบุ</string>
+    <string name="run_distance">ระยะทาง</string>
+    <string name="run_duration">เวลารวม</string>
+    <string name="run_hours">ชม.</string>
+    <string name="run_minutes">นาที</string>
+    <string name="run_seconds">วินาที</string>
+    <string name="run_pace">เพซ</string>
+    <string name="run_pace_computed">เพซจากระยะ/เวลา: %1$s</string>
+    <string name="run_pace_read">เพซที่อ่านได้จากภาพ: %1$s</string>
+    <string name="run_calories">แคลอรี่</string>
+    <string name="run_avg_hr">ชีพจรเฉลี่ย</string>
+    <string name="run_tags">แท็ก</string>
+    <string name="run_tag_add">เพิ่มแท็ก</string>
+    <string name="run_note">โน้ต</string>
+    <string name="run_keep_image">เก็บภาพต้นฉบับไว้ดูย้อนหลัง</string>
+    <string name="run_check_field">ตรวจสอบค่านี้</string>
+    <string name="run_ocr_low">ช่องสีเหลือง = Gogo อ่านไม่ค่อยมั่นใจ ตรวจอีกทีนะ</string>
+    <string name="run_ocr_failed">อ่านค่าจากภาพไม่ได้ กรอกเองได้เลย</string>
+    <string name="run_reading">กำลังอ่านภาพ…</string>
+    <string name="run_pick_images">เลือกภาพสรุปผลวิ่ง</string>
+    <string name="run_pick_text">เลือกได้หลายภาพ ระบบอ่านตัวเลข+หน่วย (km, mi, เวลา, เพซ, kcal, bpm) ในเครื่อง ไม่ส่งไปที่ไหน</string>
+    <string name="run_skip_image">ข้ามภาพนี้</string>
+    <string name="run_view_image">ดูภาพ</string>
+    <string name="run_dup_title">อาจบันทึกซ้ำ</string>
+    <string name="run_dup_text">มีการวิ่ง %1$s ระยะ %2$s ใกล้เคียงกันอยู่แล้ว ต้องการบันทึกอีกไหม?</string>
+    <string name="run_dup_save">บันทึกต่อ</string>
+    <string name="run_required">ใส่ระยะทางและเวลารวม</string>
+    <string name="run_delete_title">ลบการวิ่งนี้?</string>
+    <string name="run_delete_text">ข้อมูลการวิ่งและภาพที่เก็บไว้จะถูกลบ</string>
+    <string name="run_detail_title">รายละเอียดการวิ่ง</string>
+    <string name="run_all_done">นำเข้าครบแล้ว!</string>
+
+    <string name="warn_pace_mismatch">เพซที่คำนวณได้ไม่ตรงกับเพซในภาพ ตรวจระยะทางหรือเวลาอีกครั้ง</string>
+    <string name="warn_pace_implausible">เพซดูผิดปกติ (เร็วหรือช้าเกินไป)</string>
+    <string name="warn_distance_implausible">ระยะทางดูผิดปกติ</string>
+    <string name="warn_duration_implausible">เวลารวมดูผิดปกติ</string>
+    <string name="warn_hr_implausible">ชีพจรดูผิดปกติ</string>
+    <string name="warn_date_future">วันที่อยู่ในอนาคต</string>
+
+    <string-array name="run_tag_presets">
+        <item>เช้า</item>
+        <item>เย็น</item>
+        <item>ฝนตก</item>
+        <item>Easy</item>
+        <item>Long run</item>
+        <item>Interval</item>
+        <item>Tempo</item>
+        <item>ลู่วิ่ง</item>
+        <item>วิ่งกับเพื่อน</item>
+        <item>งานวิ่ง</item>
+    </string-array>
+</resources>
