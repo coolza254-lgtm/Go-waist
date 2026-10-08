@@ -22,7 +22,7 @@ data class TimerConfig(
     }
 }
 
-enum class PhaseKind { PREP, WORK, REST }
+enum class PhaseKind { PREP, WARMUP, WORK, REST, COOLDOWN }
 
 data class Phase(val kind: PhaseKind, val durationSec: Int, val round: Int, val totalRounds: Int)
 
