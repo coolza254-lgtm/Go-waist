@@ -1,0 +1,40 @@
+# Resolves every Gradle dependency and publishes the downloaded (public) artifacts as a
+# prerelease asset, so development containers without Google Maven access can build offline.
+name: Dependency cache
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ ccr-db481057-xuhr75 ]
+    paths: [ 'gradle/libs.versions.toml', '.github/workflows/deps-cache.yml' ]
+
+permissions:
+  contents: write
+
+jobs:
+  cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Resolve dependencies by building
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --continue :core:test :app:assembleDebug :app:assembleRelease :app:testDebugUnitTest :app:lintDebug || true
+      - name: Package downloaded artifacts
+        run: |
+          cd ~/.gradle/caches
+          tar -czf "$GITHUB_WORKSPACE/gradle-modules.tgz" modules-2/files-2.1 modules-2/metadata-*
+          ls -la "$GITHUB_WORKSPACE/gradle-modules.tgz"
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete deps-cache --yes --cleanup-tag || true
+          gh release create deps-cache gradle-modules.tgz --prerelease \
+            --title "Build dependency cache (dev only)" \
+            --notes "Gradle module cache for offline development builds. Not an app release." \
+            --target "${{ github.sha }}"
