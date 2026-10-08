@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sug_section">คำแนะนำจาก Gogo</string>
+    <string name="sug_promote_title">พร้อมเลื่อนขั้น: %1$s → %2$s</string>
+    <string name="sug_target_reason">ทำครบ %1$d×%2$d ใน %3$d เซสชันติดกัน%4$s</string>
+    <string name="sug_rpe_suffix"> (RPE เฉลี่ย %1$s)</string>
+    <string name="sug_reps_title">เพิ่มเป้า %1$s เป็น %2$d ครั้ง/เซ็ต</string>
+    <string name="sug_hold_title">เพิ่มเวลาค้าง %1$s เป็น %2$d วินาที</string>
+    <string name="sug_weight_title">เพิ่มน้ำหนัก %1$s เป็น %2$s</string>
+    <string name="sug_assist_title">ลดตัวช่วย %1$s เหลือ %2$s</string>
+    <string name="sug_plateau_title">%1$s ไม่ขยับมา 3 เซสชัน</string>
+    <string name="sug_plateau_reason">ผลดีที่สุดช่วงหลัง (%1$s) ยังไม่เกินของเดิม (%2$s) ลองพักระหว่างเซ็ตนานขึ้น เปลี่ยนท่าในสายเดียวกัน หรือลดปริมาณลงสักสัปดาห์</string>
+    <string name="sug_deload_title">แนะนำสัปดาห์เบา (Deload)</string>
+    <string name="sug_deload_reason_rpe">RPE เฉลี่ย 2 สัปดาห์ล่าสุด %1$s ซึ่งสูงต่อเนื่อง</string>
+    <string name="sug_deload_reason_decline">ผลลดลง 3 เซสชันติดกันใน %1$d ท่า</string>
+    <string name="sug_deload_tip">ลองลดจำนวนเซ็ตลงครึ่งหนึ่งและหยุดก่อนหมดแรงสัก 1 สัปดาห์ ร่างกายจะฟื้นและกลับมาแข็งแรงกว่าเดิม</string>
+    <string name="plan_increase_title">เพิ่มระยะวิ่งช่วงนี้ +10%%</string>
+    <string name="plan_increase_reason">ทำตามแผนได้ %1$d%% และ %2$d%% ใน 2 สัปดาห์ที่ผ่านมา (เพิ่มไม่เกิน 10%% ต่อสัปดาห์เพื่อลดเสี่ยงบาดเจ็บ)</string>
+    <string name="plan_reduce_title">ลดระยะวิ่งช่วงนี้ 20%%</string>
+    <string name="plan_reduce_reason">สัปดาห์ที่แล้วทำได้ %1$d%% ของแผน ลดโหลดลงก่อนเพื่อให้กลับมาทำตามแผนได้ (หรือเลื่อนแผนออกไป 1 สัปดาห์ในหน้าแผน)</string>
+    <string name="plan_pace_title">เพซดีขึ้น! เป้าเพซใหม่ %1$s</string>
+    <string name="plan_pace_reason">เพซเฉลี่ยช่วง 2 สัปดาห์หลัง %1$s เร็วกว่าเดิม (%2$s) มากกว่า 3%%</string>
+    <string name="sug_plan_label">แผน: %1$s</string>
+</resources>

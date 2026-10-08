@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_hello">สวัสดี %1$s!</string>
+    <string name="home_hello_anon">สวัสดี!</string>
+    <string name="home_today">วันนี้</string>
+    <string name="home_no_plan_today">วันนี้ไม่มีแผน</string>
+    <string name="home_no_plan_text">ออกกำลังกายตามใจ หรือไปตั้งแผนซ้อมในแท็บ "แผน"</string>
+    <string name="home_rest_today">วันนี้วันพัก 😴 ยืดเหยียดเบาๆ ก็พอ</string>
+    <string name="home_this_week">สัปดาห์นี้</string>
+    <string name="home_run_distance">ระยะวิ่ง</string>
+    <string name="home_bw_sessions">เซสชัน BW</string>
+    <string name="home_active_days">วันที่ออกกำลัง</string>
+    <string name="home_streak">Streak</string>
+    <string name="home_goals">เป้าหมายที่กำลังทำ</string>
+    <string name="home_quick">ทางลัด</string>
+    <string name="home_import_run">นำเข้าผลวิ่ง</string>
+    <string name="home_manual_run">กรอกผลวิ่งเอง</string>
+    <string name="home_start_bw">เริ่มฝึก Bodyweight</string>
+    <string name="home_resume_title">มีเซสชันที่ยังไม่จบ</string>
+    <string name="home_resume_text">เริ่มเมื่อ %1$s — กลับไปทำต่อได้เลย</string>
+    <string name="home_target_distance">เป้า %1$s</string>
+    <string name="home_target_minutes">%1$d นาที</string>
+    <string name="home_menu_settings">ตั้งค่า</string>
+    <string name="home_menu_body">Body Metrics</string>
+    <string name="home_menu_backup">สำรอง/กู้คืนข้อมูล</string>
+    <string name="home_days_of">%1$d/%2$d วัน</string>
+    <string name="home_goal_progress">%1$d%%</string>
+
+    <string-array name="mascot_welcome">
+        <item>เริ่มบันทึกครั้งแรกกันเลย! วิ่งหรือฝึกนิดเดียวก็นับนะ</item>
+        <item>ยินดีที่ได้เจอ! ลองนำเข้าผลวิ่งจากภาพดูไหม?</item>
+    </string-array>
+    <string-array name="mascot_new_pb">
+        <item>ว้าว สถิติใหม่! เก่งมากกก 🎉</item>
+        <item>PB ใหม่มาแล้ว! ร่างกายกำลังแข็งแรงขึ้นจริงๆ</item>
+        <item>ทำลายสถิติตัวเองอีกแล้ว! ภูมิใจในตัวคุณ</item>
+    </string-array>
+    <string-array name="mascot_today_done">
+        <item>วันนี้ทำครบแล้ว! พักผ่อนให้เต็มที่นะ</item>
+        <item>เสร็จภารกิจวันนี้! ดื่มน้ำเยอะๆ ด้วย</item>
+    </string-array>
+    <string-array name="mascot_week_complete">
+        <item>ทำครบแผนทั้งสัปดาห์! สุดยอดไปเลย 🏆</item>
+        <item>สัปดาห์นี้เต็มร้อย! Gogo เต้นดีใจอยู่นะ</item>
+    </string-array>
+    <string-array name="mascot_streak">
+        <item>ไฟลุกต่อเนื่อง! อย่าให้ streak ดับนะ 🔥</item>
+        <item>ต่อเนื่องหลายวันแล้ว วินัยดีมาก!</item>
+    </string-array>
+    <string-array name="mascot_today_run">
+        <item>วันนี้มีนัดวิ่ง! ใส่รองเท้าแล้วออกไปกันเลย</item>
+        <item>ลมดี อากาศดี ได้เวลาวิ่งแล้ว!</item>
+    </string-array>
+    <string-array name="mascot_today_train">
+        <item>วันนี้ฝึก Bodyweight! วอร์มอัพก่อนนะ</item>
+        <item>พร้อมเหงื่อออกไหม? ลุยเซ็ตแรกกันเลย</item>
+    </string-array>
+    <string-array name="mascot_rest_day">
+        <item>วันพักก็สำคัญ กล้ามเนื้อโตตอนพักนะ</item>
+        <item>พักให้เต็มที่ พรุ่งนี้กลับมาลุยใหม่</item>
+    </string-array>
+    <string-array name="mascot_missed_some">
+        <item>สัปดาห์นี้พลาดไปบ้าง ไม่เป็นไร เริ่มใหม่วันนี้ได้เสมอ</item>
+        <item>ช้าหน่อยไม่เป็นไร ขอแค่ไม่หยุด!</item>
+    </string-array>
+    <string-array name="mascot_long_break">
+        <item>หายไปหลายวันเลย คิดถึงนะ! มาขยับนิดหน่อยกัน</item>
+        <item>Gogo รออยู่… เริ่มเบาๆ 10 นาทีก็ได้</item>
+    </string-array>
+    <string-array name="mascot_default">
+        <item>วันนี้อยากทำอะไรดี? วิ่งหรือฝึกก็ได้นะ</item>
+        <item>ทุกก้าวนับหมด สู้ๆ!</item>
+        <item>ร่างกายขอบคุณที่ดูแลมันนะ</item>
+    </string-array>
+</resources>

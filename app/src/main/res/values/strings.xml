@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Go waist</string>
+
+    <!-- Common actions -->
+    <string name="action_cancel">ยกเลิก</string>
+    <string name="action_save">บันทึก</string>
+    <string name="action_delete">ลบ</string>
+    <string name="action_edit">แก้ไข</string>
+    <string name="action_done">เสร็จ</string>
+    <string name="action_next">ถัดไป</string>
+    <string name="action_back">ย้อนกลับ</string>
+    <string name="action_close">ปิด</string>
+    <string name="action_add">เพิ่ม</string>
+    <string name="action_start">เริ่ม</string>
+    <string name="action_start_now">เริ่มเลย!</string>
+    <string name="action_skip">ข้าม</string>
+    <string name="action_ok">ตกลง</string>
+    <string name="action_accept">ยอมรับ</string>
+    <string name="action_reject">ไม่เอา</string>
+    <string name="action_snooze">ไว้ทีหลัง</string>
+    <string name="action_search">ค้นหา</string>
+    <string name="action_clear">ล้าง</string>
+    <string name="action_confirm">ยืนยัน</string>
+    <string name="action_continue">ทำต่อ</string>
+    <string name="action_discard">ทิ้ง</string>
+    <string name="action_more">เพิ่มเติม</string>
+    <string name="action_see_all">ดูทั้งหมด</string>
+    <string name="action_create">สร้าง</string>
+    <string name="action_change">เปลี่ยน</string>
+    <string name="action_today">วันนี้</string>
+
+    <string name="cd_decrease">ลด %1$s</string>
+    <string name="cd_increase">เพิ่ม %1$s</string>
+    <string name="cd_mascot">มาสคอต Gogo</string>
+    <string name="cd_settings">ตั้งค่า</string>
+    <string name="cd_menu">เมนู</string>
+    <string name="cd_favorite">ท่าโปรด</string>
+    <string name="cd_back">ย้อนกลับ</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">หน้าหลัก</string>
+    <string name="nav_run">วิ่ง</string>
+    <string name="nav_train">ฝึก</string>
+    <string name="nav_plan">แผน</string>
+    <string name="nav_goals">เป้าหมาย</string>
+
+    <!-- Units -->
+    <string name="unit_km">กม.</string>
+    <string name="unit_mi">ไมล์</string>
+    <string name="unit_kg">กก.</string>
+    <string name="unit_lb">ปอนด์</string>
+    <string name="unit_cm">ซม.</string>
+    <string name="unit_in">นิ้ว</string>
+    <string name="unit_reps">ครั้ง</string>
+    <string name="unit_sec">วิ</string>
+    <string name="unit_min">นาที</string>
+    <string name="unit_bpm">bpm</string>
+    <string name="unit_kcal">kcal</string>
+    <string name="unit_sets">เซ็ต</string>
+    <string name="unit_days">วัน</string>
+    <string name="unit_m">ม.</string>
+    <string name="unit_per_km">/กม.</string>
+    <string name="unit_per_mi">/ไมล์</string>
+    <string name="unit_sessions">ครั้ง</string>
+    <string name="unit_hours">ชม.</string>
+
+    <!-- Movement patterns -->
+    <string name="pattern_push">ดัน (Push)</string>
+    <string name="pattern_pull">ดึง (Pull)</string>
+    <string name="pattern_legs">ขา (Legs)</string>
+    <string name="pattern_core">แกนกลาง (Core)</string>
+    <string name="pattern_full_body">ทั้งตัว/คาร์ดิโอ</string>
+    <string name="pattern_skill">ทักษะ/ค้างท่า</string>
+
+    <!-- Muscles -->
+    <string name="muscle_chest">อก</string>
+    <string name="muscle_shoulders">ไหล่</string>
+    <string name="muscle_triceps">ไตรเซป</string>
+    <string name="muscle_back">หลัง</string>
+    <string name="muscle_biceps">ไบเซป</string>
+    <string name="muscle_glutes">ก้น</string>
+    <string name="muscle_legs">ขา</string>
+    <string name="muscle_calves">น่อง</string>
+    <string name="muscle_abs">หน้าท้อง</string>
+    <string name="muscle_obliques">เอว/ข้างลำตัว</string>
+    <string name="muscle_lower_back">หลังส่วนล่าง</string>
+
+    <!-- Tracking types -->
+    <string name="tracking_reps">จำนวนครั้ง</string>
+    <string name="tracking_hold">เวลาค้าง</string>
+    <string name="tracking_weighted">ครั้ง + น้ำหนักเพิ่ม</string>
+    <string name="tracking_assisted">ครั้ง + ตัวช่วย</string>
+    <string name="tracking_cardio">ระยะทาง/เวลา</string>
+
+    <!-- Equipment -->
+    <string name="equipment_none">ไม่มีอุปกรณ์</string>
+    <string name="equipment_bar">บาร์โหน</string>
+    <string name="equipment_band">ยางยืด</string>
+    <string name="equipment_rings">ห่วง</string>
+    <string name="equipment_dip_bars">บาร์คู่</string>
+
+    <!-- Set types -->
+    <string name="settype_warmup">วอร์มอัพ</string>
+    <string name="settype_normal">ปกติ</string>
+    <string name="settype_drop">ดร็อปเซ็ต</string>
+    <string name="settype_failure">จนหมดแรง</string>
+    <string name="settype_warmup_short">W</string>
+    <string name="settype_drop_short">D</string>
+    <string name="settype_failure_short">F</string>
+
+    <!-- Plan day types -->
+    <string name="day_run_easy">วิ่ง Easy</string>
+    <string name="day_run_tempo">วิ่ง Tempo</string>
+    <string name="day_run_interval">วิ่ง Interval</string>
+    <string name="day_run_long">Long run</string>
+    <string name="day_bw_push">Bodyweight: Push</string>
+    <string name="day_bw_pull">Bodyweight: Pull</string>
+    <string name="day_bw_legs">Bodyweight: Legs</string>
+    <string name="day_bw_core">Bodyweight: Core</string>
+    <string name="day_bw_full">Bodyweight: Full Body</string>
+    <string name="day_bw_upper">Bodyweight: Upper</string>
+    <string name="day_bw_lower">Bodyweight: Lower</string>
+    <string name="day_rest">วันพัก</string>
+
+    <!-- Plan day statuses -->
+    <string name="status_pending">รอทำ</string>
+    <string name="status_done">ทำแล้ว</string>
+    <string name="status_partial">ทำบางส่วน</string>
+    <string name="status_missed">พลาด</string>
+    <string name="status_over">ทำเกิน</string>
+    <string name="status_rest">พัก</string>
+
+    <!-- Goal types -->
+    <string name="goal_run_distance">วิ่งสะสมให้ครบระยะ</string>
+    <string name="goal_run_count">วิ่งให้ครบจำนวนครั้ง</string>
+    <string name="goal_run_5k_time">วิ่ง 5K ให้เร็วกว่าเวลา</string>
+    <string name="goal_bw_sessions">ฝึก Bodyweight ให้ครบจำนวนครั้ง</string>
+    <string name="goal_exercise_max_reps">ทำท่าได้กี่ครั้งติด</string>
+    <string name="goal_exercise_hold">ค้างท่าได้นาน</string>
+    <string name="goal_exercise_total_reps">รวมจำนวนครั้งของท่า</string>
+    <string name="goal_streak_days">ออกกำลังกายต่อเนื่อง (streak)</string>
+    <string name="goal_body_weight">น้ำหนักตัวถึงเป้า</string>
+    <string name="goal_waist">รอบเอวถึงเป้า</string>
+
+    <string name="period_week">สัปดาห์นี้</string>
+    <string name="period_month">เดือนนี้</string>
+    <string name="period_custom">กำหนดเอง</string>
+
+    <!-- Personal record types -->
+    <string name="pr_max_reps">ครั้งมากสุดใน 1 เซ็ต</string>
+    <string name="pr_longest_hold">ค้างนานที่สุด</string>
+    <string name="pr_max_volume_session">ปริมาณรวมสูงสุดต่อเซสชัน</string>
+    <string name="pr_best_set">เซ็ตที่ดีที่สุด</string>
+    <string name="pr_max_added_weight">น้ำหนักเพิ่มสูงสุด</string>
+    <string name="pr_est_1rm">1RM โดยประมาณ (Epley)</string>
+    <string name="pr_run_longest">วิ่งไกลที่สุด</string>
+    <string name="pr_run_fastest_pace">เพซเร็วที่สุด</string>
+    <string name="pr_run_1k">1K เร็วที่สุด</string>
+    <string name="pr_run_5k">5K เร็วที่สุด</string>
+    <string name="pr_run_10k">10K เร็วที่สุด</string>
+    <string name="pr_run_half">ฮาล์ฟมาราธอนเร็วที่สุด</string>
+
+    <!-- Weekday short names Mon..Sun -->
+    <string-array name="weekdays_short">
+        <item>จ</item>
+        <item>อ</item>
+        <item>พ</item>
+        <item>พฤ</item>
+        <item>ศ</item>
+        <item>ส</item>
+        <item>อา</item>
+    </string-array>
+    <string-array name="weekdays_long">
+        <item>จันทร์</item>
+        <item>อังคาร</item>
+        <item>พุธ</item>
+        <item>พฤหัสบดี</item>
+        <item>ศุกร์</item>
+        <item>เสาร์</item>
+        <item>อาทิตย์</item>
+    </string-array>
+
+    <!-- Feelings 1..5 -->
+    <string-array name="feelings">
+        <item>แย่</item>
+        <item>เหนื่อยมาก</item>
+        <item>โอเค</item>
+        <item>ดี</item>
+        <item>สุดยอด</item>
+    </string-array>
+
+    <string name="error_generic">เกิดข้อผิดพลาด: %1$s</string>
+    <string name="saved">บันทึกแล้ว</string>
+    <string name="deleted">ลบแล้ว</string>
+    <string name="undo">เลิกทำ</string>
+</resources>

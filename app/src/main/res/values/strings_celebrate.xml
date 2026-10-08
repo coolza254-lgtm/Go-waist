@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="celebrate_pb_title">สถิติใหม่! 🎉</string>
+    <string name="celebrate_goal_title">ทำเป้าหมายสำเร็จ! 🏆</string>
+    <string name="celebrate_reward_unlocked">🎁 ปลดล็อกรางวัล: %1$s</string>
+    <string name="celebrate_badge_title">ได้เหรียญตราใหม่!</string>
+    <string name="celebrate_yay">เย้!</string>
+</resources>

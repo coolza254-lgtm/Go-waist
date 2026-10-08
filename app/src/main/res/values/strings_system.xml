@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="channel_reminders">เตือนวันซ้อม</string>
+    <string name="channel_reminders_desc">แจ้งเตือนเมื่อวันนี้มีแผนซ้อมที่ยังไม่ได้ทำ</string>
+    <string name="channel_timer">ตัวจับเวลา</string>
+    <string name="channel_timer_desc">แสดงเวลาพักและตัวจับเวลาระหว่างฝึก</string>
+    <string name="channel_alerts">หมดเวลาพัก</string>
+    <string name="channel_alerts_desc">แจ้งเมื่อเวลาพักหมด</string>
+
+    <string name="timer_rest_title">พัก %1$s</string>
+    <string name="timer_rest_next">ถัดไป: %1$s</string>
+    <string name="timer_rest_done_title">หมดเวลาพักแล้ว! 💪</string>
+    <string name="timer_rest_done_text">ลุยเซ็ตถัดไป: %1$s</string>
+    <string name="timer_hold_title">ค้างท่า %1$s</string>
+    <string name="timer_phase_prep">เตรียมตัว</string>
+    <string name="timer_phase_work">ลุย!</string>
+    <string name="timer_phase_rest">พัก</string>
+    <string name="timer_round">รอบ %1$d/%2$d</string>
+    <string name="timer_paused">หยุดชั่วคราว</string>
+
+    <string name="reminder_title">ได้เวลาซ้อมแล้ว!</string>
+    <string name="reminder_text">วันนี้: %1$s — Gogo รออยู่นะ</string>
+
+    <string name="widget_description">แผนวันนี้และ streak</string>
+    <string name="widget_today">วันนี้</string>
+    <string name="widget_no_plan">ไม่มีแผน — ออกกำลังกายตามใจได้เลย</string>
+    <string name="widget_streak_days">วันติด</string>
+</resources>

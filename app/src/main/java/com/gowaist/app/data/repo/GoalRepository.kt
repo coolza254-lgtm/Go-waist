@@ -67,6 +67,8 @@ class GoalRepository @Inject constructor(
 
     suspend fun delete(id: Long) = dao.delete(id)
 
+    suspend fun rewardTextFor(goalId: Long): String? = dao.rewardFor(goalId)?.text
+
     suspend fun claimReward(reward: RewardEntity, claimed: Boolean) =
         dao.updateReward(reward.copy(claimedAt = if (claimed) System.currentTimeMillis() else null))
 

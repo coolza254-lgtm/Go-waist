@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ob_welcome_title">สวัสดี! ฉันชื่อ Gogo</string>
+    <string name="ob_welcome_text">ฉันจะช่วยจดผลวิ่ง บันทึกท่า Bodyweight และเชียร์ให้ถึงเป้าหมาย ข้อมูลทั้งหมดอยู่ในเครื่องคุณเท่านั้น</string>
+    <string name="ob_nickname">ให้ Gogo เรียกคุณว่าอะไรดี?</string>
+    <string name="ob_nickname_hint">ชื่อเล่น (ไม่ใส่ก็ได้)</string>
+    <string name="ob_units_title">ตั้งหน่วยที่ใช้</string>
+    <string name="ob_units_text">เปลี่ยนภายหลังได้ในตั้งค่า</string>
+    <string name="ob_distance">ระยะทาง</string>
+    <string name="ob_weight">น้ำหนัก</string>
+    <string name="ob_length">ความยาว (รอบเอว)</string>
+    <string name="ob_bodyweight">น้ำหนักตัวโดยประมาณ</string>
+    <string name="ob_bodyweight_hint">ใช้คำนวณ volume และแคลอรี่โดยประมาณ</string>
+    <string name="ob_equipment_title">มีอุปกรณ์อะไรบ้าง?</string>
+    <string name="ob_equipment_text">Gogo จะซ่อนท่าที่ต้องใช้อุปกรณ์ที่คุณไม่มี (ท่าไม่ใช้อุปกรณ์มีให้เสมอ)</string>
+    <string name="ob_goal_title">ตั้งเป้าหมายแรกกัน!</string>
+    <string name="ob_goal_text">เลือกเป้าเล็กๆ ที่ทำได้จริง แล้วใส่รางวัลให้ตัวเอง</string>
+    <string name="ob_goal_run">วิ่งให้ครบ 10 กม. ในสัปดาห์นี้</string>
+    <string name="ob_goal_bw">ฝึก Bodyweight 3 ครั้งในสัปดาห์นี้</string>
+    <string name="ob_goal_plank">แพลงก์ค้างให้ได้ 60 วินาที ภายในเดือนนี้</string>
+    <string name="ob_goal_none">ไว้ตั้งทีหลัง</string>
+    <string name="ob_reward_hint">รางวัลเมื่อทำสำเร็จ เช่น กินบุฟเฟ่ต์</string>
+    <string name="ob_finish">เริ่มใช้งาน!</string>
+    <string name="ob_goal_title_run">วิ่ง 10 กม. สัปดาห์นี้</string>
+    <string name="ob_goal_title_bw">ฝึก Bodyweight 3 ครั้ง</string>
+    <string name="ob_goal_title_plank">แพลงก์ 60 วินาที</string>
+</resources>
