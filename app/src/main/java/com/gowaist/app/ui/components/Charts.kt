@@ -242,3 +242,96 @@ fun MonthCalendar(
         }
     }
 }
+
+/** One series for [MultiLineChart]; null values are gaps. */
+data class ChartSeries(
+    val values: List<Float?>,
+    val color: Color,
+    val line: Boolean = true,
+    val dots: Boolean = false,
+    val width: Float = 6f,
+    val label: String? = null,
+)
+
+/**
+ * Several series over the same x positions (e.g. daily values). Optional horizontal reference
+ * line (e.g. goal weight or zero form) drawn dashed-free in a muted colour.
+ */
+@Composable
+fun MultiLineChart(
+    series: List<ChartSeries>,
+    firstLabel: String,
+    lastLabel: String,
+    modifier: Modifier = Modifier,
+    height: Dp = 180.dp,
+    reference: Float? = null,
+    yLabel: (Float) -> String = { com.gowaist.core.Format.decimal(it.toDouble(), 1) },
+    description: String = "",
+) {
+    val all = series.flatMap { it.values.filterNotNull() } + listOfNotNull(reference)
+    if (all.isEmpty()) return
+    val anim = remember(series) { Animatable(0f) }
+    LaunchedEffect(series) { anim.animateTo(1f, tween(700)) }
+    val minV = all.min()
+    val maxV = all.max()
+    val span = (maxV - minV).takeIf { it > 0.0001f } ?: 1f
+    val grid = Gw.colors.track
+    val refColor = Gw.colors.muted
+    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+    Column(modifier.semantics { contentDescription = description }) {
+        Row {
+            Column(Modifier.height(height).width(44.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                Text(yLabel(maxV), fontSize = 10.sp, color = labelColor)
+                Text(yLabel(minV), fontSize = 10.sp, color = labelColor)
+            }
+            Canvas(Modifier.weight(1f).height(height)) {
+                val pad = 10f
+                val n = series.maxOf { it.values.size }.coerceAtLeast(1)
+                fun x(i: Int) = if (n <= 1) size.width / 2 else pad + i * (size.width - 2 * pad) / (n - 1)
+                fun y(v: Float) = pad + (1 - (v - minV) / span) * (size.height - 2 * pad)
+                for (g in 0..3) {
+                    val gy = pad + g * (size.height - 2 * pad) / 3
+                    drawLine(grid, Offset(0f, gy), Offset(size.width, gy), strokeWidth = 2f)
+                }
+                reference?.let { drawLine(refColor, Offset(0f, y(it)), Offset(size.width, y(it)), strokeWidth = 4f) }
+                val visible = (n * anim.value).toInt().coerceAtLeast(1)
+                series.forEach { s ->
+                    if (s.line) {
+                        val path = Path()
+                        var started = false
+                        s.values.take(visible).forEachIndexed { i, v ->
+                            if (v == null) { started = false; return@forEachIndexed }
+                            if (!started) { path.moveTo(x(i), y(v)); started = true } else path.lineTo(x(i), y(v))
+                        }
+                        drawPath(path, s.color, style = Stroke(s.width, cap = StrokeCap.Round))
+                    }
+                    if (s.dots) {
+                        s.values.take(visible).forEachIndexed { i, v ->
+                            if (v != null) {
+                                drawCircle(Color.White, 9f, Offset(x(i), y(v)))
+                                drawCircle(s.color, 6.5f, Offset(x(i), y(v)))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(start = 44.dp)) {
+            Text(firstLabel, fontSize = 10.sp, color = labelColor)
+            Spacer(Modifier.weight(1f))
+            Text(lastLabel, fontSize = 10.sp, color = labelColor)
+        }
+        val legend = series.filter { it.label != null }
+        if (legend.isNotEmpty()) {
+            Row(Modifier.padding(start = 44.dp, top = 4.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                legend.forEach { s ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(10.dp).clip(RoundedCornerShape(5.dp)).background(s.color))
+                        Spacer(Modifier.width(4.dp))
+                        Text(s.label!!, fontSize = 11.sp, color = labelColor)
+                    }
+                }
+            }
+        }
+    }
+}

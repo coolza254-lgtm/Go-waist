@@ -144,12 +144,13 @@ object WorkoutMath {
 
 object RunStats {
 
-    data class Totals(val count: Int, val distanceM: Double, val durationSec: Long) {
-        val avgPaceSecPerKm: Double? get() = if (distanceM > 0 && durationSec > 0) durationSec / (distanceM / 1000.0) else null
+    /** [timedDistanceM] only counts runs with a recorded time (long runs may track distance only). */
+    data class Totals(val count: Int, val distanceM: Double, val durationSec: Long, val timedDistanceM: Double = distanceM) {
+        val avgPaceSecPerKm: Double? get() = if (timedDistanceM > 0 && durationSec > 0) durationSec / (timedDistanceM / 1000.0) else null
     }
 
     fun totals(runs: List<RunFacts>): Totals =
-        Totals(runs.size, runs.sumOf { it.distanceM }, runs.sumOf { it.durationSec })
+        Totals(runs.size, runs.sumOf { it.distanceM }, runs.sumOf { it.durationSec }, runs.filter { it.durationSec > 0 }.sumOf { it.distanceM })
 
     fun inRange(runs: List<RunFacts>, from: LocalDate, toInclusive: LocalDate) =
         runs.filter { !it.localDate.isBefore(from) && !it.localDate.isAfter(toInclusive) }

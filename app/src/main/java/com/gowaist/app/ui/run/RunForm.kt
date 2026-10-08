@@ -61,12 +61,14 @@ import com.gowaist.core.Pace
 import com.gowaist.core.Units
 import com.gowaist.core.ocr.Confidence
 import com.gowaist.core.ocr.ParsedRun
+import com.gowaist.core.perf.RunType
 import com.gowaist.core.run.RunChecks
 import com.gowaist.core.run.RunWarning
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneOffset
+import kotlin.math.roundToInt
 
 enum class RunField { DATE, TIME, DISTANCE, DURATION, PACE, CALORIES, HR }
 
@@ -88,7 +90,13 @@ class RunForm(val unit: DistanceUnit) {
     var existingImagePath by mutableStateOf<String?>(null)
     var keepImage by mutableStateOf(true)
     var lowConfidence by mutableStateOf(setOf<RunField>())
+    var runType by mutableStateOf(RunType.FREE)
+    var rpe by mutableStateOf<Int?>(null)
+    var intervalJson: String? = null
     var createdAt = System.currentTimeMillis()
+
+    /** Long runs only track distance, so their time may be left empty. */
+    val durationOptional: Boolean get() = runType == RunType.LONG
 
     val distanceM: Double? get() = distance.replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 }?.let { Units.toMeters(unit, it) }
     val durationSec: Long?
@@ -134,25 +142,31 @@ class RunForm(val unit: DistanceUnit) {
         tags = r.tags
         note = r.note
         existingImagePath = r.sourceImagePath
+        runType = r.runType
+        rpe = r.rpe?.roundToInt()
+        intervalJson = r.intervalJson
         createdAt = r.createdAt
     }
 
     fun toEntity(imagePath: String?): RunEntity? {
         val d = distanceM ?: return null
-        val t = durationSec ?: return null
+        val t = durationSec ?: if (durationOptional) 0L else return null
         return RunEntity(
             id = id,
             startAt = startAtMillis,
             localDate = date.key(),
             distanceM = d,
             durationSec = t,
-            avgPaceSecPerKm = Pace.secPerKm(d, t),
+            avgPaceSecPerKm = if (t > 0) Pace.secPerKm(d, t) else null,
             calories = calories.toIntOrNull(),
             avgHr = hr.toIntOrNull(),
             note = note.trim(),
             tags = tags,
             sourceImagePath = imagePath,
             createdAt = createdAt,
+            runType = runType,
+            rpe = rpe?.toDouble(),
+            intervalJson = intervalJson,
         )
     }
 }
@@ -229,6 +243,8 @@ fun RunFormContent(form: RunForm, existingTags: List<String>, modifier: Modifier
             OutlinedTextField(form.calories, { form.calories = it.filter(Char::isDigit).take(5); touched(RunField.CALORIES) }, label = { Text(stringResource(R.string.run_calories)) }, suffix = { Text(stringResource(R.string.unit_kcal)) }, keyboardOptions = numbers, singleLine = true, modifier = Modifier.weight(1f), colors = fieldColors(RunField.CALORIES in low))
             OutlinedTextField(form.hr, { form.hr = it.filter(Char::isDigit).take(3); touched(RunField.HR) }, label = { Text(stringResource(R.string.run_avg_hr)) }, suffix = { Text(stringResource(R.string.unit_bpm)) }, keyboardOptions = numbers, singleLine = true, modifier = Modifier.weight(1f), colors = fieldColors(RunField.HR in low))
         }
+        RunTypePicker(form.runType) { form.runType = it }
+        RpePicker(form.rpe) { form.rpe = it }
         TagEditor(form.tags, (stringArrayResource(R.array.run_tag_presets).toList() + existingTags).distinct()) { form.tags = it }
         OutlinedTextField(form.note, { form.note = it.take(500) }, label = { Text(stringResource(R.string.run_note)) }, modifier = Modifier.fillMaxWidth(), minLines = 2)
     }
@@ -321,4 +337,32 @@ fun KeepImageSwitch(form: RunForm) {
         Text(stringResource(R.string.run_keep_image), Modifier.weight(1f))
         Switch(form.keepImage, { form.keepImage = it })
     }
+}
+
+@Composable
+fun RunType.label(): String = stringResource(
+    when (this) {
+        RunType.FREE -> R.string.runtype_free
+        RunType.COOPER -> R.string.runtype_cooper
+        RunType.INTERVAL -> R.string.runtype_interval
+        RunType.LONG -> R.string.runtype_long
+    },
+)
+
+@Composable
+fun RunTypePicker(value: RunType, onChange: (RunType) -> Unit) {
+    Text(stringResource(R.string.run_type), style = MaterialTheme.typography.labelLarge)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        RunType.entries.forEach { t -> FilterChip(value == t, { onChange(t) }, label = { Text(t.label()) }) }
+    }
+}
+
+/** Perceived effort 1–10 as a row of tappable chips (tap again to clear). */
+@Composable
+fun RpePicker(value: Int?, onChange: (Int?) -> Unit) {
+    Text(stringResource(R.string.run_rpe), style = MaterialTheme.typography.labelLarge)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        (1..10).forEach { n -> FilterChip(value == n, { onChange(if (value == n) null else n) }, label = { Text("$n") }) }
+    }
+    Text(stringResource(R.string.run_rpe_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }

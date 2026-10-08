@@ -47,6 +47,25 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import com.gowaist.app.ui.components.ChartSeries
+import com.gowaist.app.ui.components.GameBanner
+import com.gowaist.app.ui.components.GameButton
+import com.gowaist.app.ui.components.Mascot
+import com.gowaist.app.ui.components.MultiLineChart
+import com.gowaist.app.ui.components.NumberStepper
+import com.gowaist.app.ui.components.Pill
+import com.gowaist.app.ui.perf.color
+import com.gowaist.app.ui.perf.label
+import com.gowaist.app.ui.theme.Palette
+import com.gowaist.core.perf.WeightStats
+import kotlin.math.roundToLong
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -56,6 +75,11 @@ import com.gowaist.app.R
 import com.gowaist.app.data.db.BodyMetricEntity
 import com.gowaist.app.data.key
 import com.gowaist.app.data.repo.BodyRepository
+import com.gowaist.app.data.repo.GoalRepository
+import com.gowaist.core.model.GoalStatus
+import com.gowaist.core.model.GoalType
+import com.gowaist.core.perf.WeightTrend
+import kotlinx.coroutines.flow.map
 import com.gowaist.app.data.toLocalDate
 import com.gowaist.app.domain.ActivityCoordinator
 import com.gowaist.app.ui.Fmt
@@ -86,8 +110,14 @@ import javax.inject.Inject
 class BodyViewModel @Inject constructor(
     private val body: BodyRepository,
     private val coordinator: ActivityCoordinator,
+    goals: GoalRepository,
 ) : ViewModel() {
     val metrics = body.metrics.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    /** Target of the active body-weight goal, if any. */
+    val goalKg = goals.goals.map { l -> l.firstOrNull { it.goal.type == GoalType.BODY_WEIGHT && it.goal.status == GoalStatus.ACTIVE }?.goal?.target }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    fun quickWeight(kg: Double) = save(BodyMetricEntity(date = LocalDate.now().key(), weightKg = kg))
 
     fun save(m: BodyMetricEntity) = viewModelScope.launch { body.save(m); coordinator.afterChange() }
     fun delete(id: Long) = viewModelScope.launch { body.delete(id); coordinator.afterChange(celebrate = false) }
@@ -96,32 +126,37 @@ class BodyViewModel @Inject constructor(
 @Composable
 fun BodyScreen(nav: NavHostController, vm: BodyViewModel = hiltViewModel()) {
     val list by vm.metrics.collectAsStateWithLifecycle()
+    val goalKg by vm.goalKg.collectAsStateWithLifecycle()
     val s = LocalAppSettings.current
     var adding by remember { mutableStateOf(false) }
     var waist by rememberSaveable { mutableStateOf(false) }
     var deleting by remember { mutableStateOf<BodyMetricEntity?>(null) }
     Scaffold(
-        topBar = { GwTopBar(stringResource(R.string.body_title), onBack = { nav.popBackStack() }) },
-        floatingActionButton = { ExtendedFloatingActionButton(modifier = Modifier.testTag("fab_body"), onClick = { adding = true }, icon = { Icon(Icons.Rounded.Add, null) }, text = { Text(stringResource(R.string.body_add)) }, containerColor = Gw.colors.goal, contentColor = MaterialTheme.colorScheme.surface) },
+        topBar = { GwTopBar(stringResource(R.string.weight_title), onBack = { nav.popBackStack() }) },
+        floatingActionButton = { ExtendedFloatingActionButton(modifier = Modifier.testTag("fab_body"), onClick = { adding = true }, icon = { Icon(Icons.Rounded.Add, null) }, text = { Text(stringResource(R.string.weight_more)) }, containerColor = Gw.colors.goal, contentColor = MaterialTheme.colorScheme.surface) },
     ) { pad ->
         if (!s.bodyMetricsEnabled) {
             EmptyState(stringResource(R.string.body_title), stringResource(R.string.body_disabled), Modifier.padding(pad), mood = MascotMood.SLEEPY)
             return@Scaffold
         }
-        if (list.isEmpty()) {
-            EmptyState(stringResource(R.string.body_empty_title), stringResource(R.string.body_empty_text), Modifier.padding(pad), mood = MascotMood.CALM, actionText = stringResource(R.string.body_add), onAction = { adding = true })
-            return@Scaffold
-        }
+        val weights = remember(list) { list.mapNotNull { m -> m.weightKg?.let { m.date.toLocalDate() to it } }.sortedBy { it.first } }
+        val waists = remember(list) { list.mapNotNull { m -> m.waistCm?.let { m.date.toLocalDate() to it } }.sortedBy { it.first } }
+        val stats = remember(weights, s.heightCm, goalKg) { WeightTrend.stats(weights, s.heightCm, goalKg, LocalDate.now()) }
         LazyColumn(Modifier.padding(pad), contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            val weights = list.mapNotNull { m -> m.weightKg?.let { m.date.toLocalDate() to it } }.sortedBy { it.first }
-            val waists = list.mapNotNull { m -> m.waistCm?.let { m.date.toLocalDate() to it } }.sortedBy { it.first }
-            item {
+            item(key = "weight_banner") { WeightBanner(stats, goalKg) }
+            item(key = "weight_quick") { QuickWeight(weights.lastOrNull()?.second ?: s.bodyweightKg, vm::quickWeight) }
+            if (weights.size >= 2) item(key = "weight_chart") { WeightChart(weights, goalKg) }
+            if (list.isEmpty()) {
+                item(key = "empty") { EmptyState(stringResource(R.string.body_empty_title), stringResource(R.string.body_empty_text), mood = MascotMood.CALM) }
+                return@LazyColumn
+            }
+            item(key = "tiles") {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     StatTile(stringResource(R.string.body_weight), weights.lastOrNull()?.let { Format.decimal(Units.kgTo(s.weightUnit, it.second), 1) } ?: "-", Modifier.weight(1f), unit = s.weightUnit.label(), icon = Icons.Rounded.MonitorWeight, color = Gw.colors.goal)
                     StatTile(stringResource(R.string.body_waist), waists.lastOrNull()?.let { Format.decimal(Units.cmTo(s.lengthUnit, it.second), 1) } ?: "-", Modifier.weight(1f), unit = s.lengthUnit.label(), icon = Icons.Rounded.Straighten, color = Gw.colors.run)
                 }
             }
-            item {
+            item(key = "trend") {
                 GameCard {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(stringResource(R.string.body_trend), style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
@@ -146,7 +181,7 @@ fun BodyScreen(nav: NavHostController, vm: BodyViewModel = hiltViewModel()) {
                     }
                 }
             }
-            item { Text(stringResource(R.string.body_history), style = MaterialTheme.typography.titleLarge) }
+            item(key = "history") { Text(stringResource(R.string.body_history), style = MaterialTheme.typography.titleLarge) }
             items(list, key = { it.id }) { m ->
                 GameCard(contentPadding = PaddingValues(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -227,5 +262,101 @@ private fun AddMetricDialog(onDismiss: () -> Unit, onSave: (BodyMetricEntity) ->
             confirmButton = { TextButton({ state.selectedDateMillis?.let { date = Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate() }; pickDate = false }) { Text(stringResource(R.string.action_ok)) } },
             dismissButton = { TextButton({ pickDate = false }) { Text(stringResource(R.string.action_cancel)) } },
         ) { DatePicker(state) }
+    }
+}
+
+@Composable
+private fun WeightBanner(stats: WeightStats?, goalKg: Double?) {
+    val s = LocalAppSettings.current
+    GameBanner(listOf(Palette.Green, Palette.Teal), seed = 7) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.weight_title), color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    stats?.let { Format.decimal(Units.kgTo(s.weightUnit, it.latest), 1) } ?: "--",
+                    color = Color.White, fontSize = 52.sp, fontWeight = FontWeight.Black, lineHeight = 56.sp, modifier = Modifier.testTag("weight_latest"),
+                )
+                Text(s.weightUnit.label(), color = Color.White.copy(alpha = 0.9f), style = MaterialTheme.typography.labelLarge)
+            }
+            Mascot(MascotMood.HAPPY, Modifier.size(84.dp), animate = false)
+        }
+        if (stats != null) {
+            Spacer(Modifier.height(10.dp))
+            // Losing weight counts as progress unless the goal is above the current weight.
+            val downIsGood = goalKg == null || goalKg < stats.average7
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                WeightChip(stringResource(R.string.weight_avg7), Format.decimal(Units.kgTo(s.weightUnit, stats.average7), 1), Modifier.weight(1f))
+                WeightChip(stringResource(R.string.weight_rate), stats.weeklyRate?.let { signed(Units.kgTo(s.weightUnit, it), 2) } ?: "-", Modifier.weight(1f), good = stats.weeklyRate?.let { (it < 0) == downIsGood })
+                WeightChip(stringResource(R.string.weight_change30), stats.change30?.let { signed(Units.kgTo(s.weightUnit, it), 1) } ?: "-", Modifier.weight(1f), good = stats.change30?.let { (it < 0) == downIsGood })
+            }
+            Spacer(Modifier.height(8.dp))
+            val bmi = stats.bmi
+            if (bmi != null) {
+                val cls = WeightTrend.bmiClass(bmi)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.weight_bmi) + " " + Format.decimal(bmi, 1) + "  ", color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                    Pill(cls.label(), cls.color(), filled = true)
+                }
+            } else {
+                Text(stringResource(R.string.weight_need_height), color = Color.White, style = MaterialTheme.typography.bodySmall)
+            }
+            val goalDate = stats.goalDate
+            if (goalKg != null && goalDate != null) {
+                Text(stringResource(R.string.weight_goal_date, Fmt.weight(goalKg), Fmt.dateMedium(goalDate)), color = Color.White, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+private fun signed(v: Double, digits: Int) = (if (v > 0) "+" else "") + Format.decimal(v, digits)
+
+@Composable
+private fun WeightChip(label: String, value: String, modifier: Modifier, good: Boolean? = null) {
+    Column(
+        modifier.clip(RoundedCornerShape(16.dp)).background(Color.White.copy(alpha = 0.22f)).padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(value, color = when (good) { true -> Color.White; false -> Palette.Yellow; null -> Color.White }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black, maxLines = 1)
+        Text(label, color = Color.White.copy(alpha = 0.9f), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+    }
+}
+
+/** One-tap weigh-in: a stepper preset to the last weight (0.1 steps in the user's unit). */
+@Composable
+private fun QuickWeight(lastKg: Double, onSave: (Double) -> Unit) {
+    val s = LocalAppSettings.current
+    var value by rememberSaveable(lastKg, s.weightUnit) { mutableStateOf(Math.round(Units.kgTo(s.weightUnit, lastKg) * 10) / 10.0) }
+    GameCard(accent = Palette.Green) {
+        Text(stringResource(R.string.weight_quick), style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(6.dp))
+        NumberStepper(
+            Format.decimal(value, 1) + " " + s.weightUnit.label(), stringResource(R.string.body_weight),
+            { value = ((value - 0.1).coerceAtLeast(20.0) * 10).roundToLong() / 10.0 },
+            { value = ((value + 0.1).coerceAtMost(660.0) * 10).roundToLong() / 10.0 },
+            color = Palette.Green,
+        )
+        Spacer(Modifier.height(8.dp))
+        GameButton(stringResource(R.string.action_save), { onSave(Units.toKg(s.weightUnit, value)) }, color = Palette.Green, modifier = Modifier.fillMaxWidth().testTag("weight_save"))
+    }
+}
+
+@Composable
+private fun WeightChart(weights: List<Pair<LocalDate, Double>>, goalKg: Double?) {
+    val s = LocalAppSettings.current
+    val shown = weights.takeLast(90)
+    val smooth = remember(shown) { Smoothing.movingAverage(shown, 7) }
+    GameCard {
+        Text(stringResource(R.string.body_trend), style = MaterialTheme.typography.titleSmall)
+        Spacer(Modifier.height(8.dp))
+        MultiLineChart(
+            listOf(
+                ChartSeries(shown.map { Units.kgTo(s.weightUnit, it.second).toFloat() }, Palette.Green.copy(alpha = 0.45f), width = 4f, dots = true, label = stringResource(R.string.body_weight)),
+                ChartSeries(smooth.map { Units.kgTo(s.weightUnit, it.second).toFloat() }, Palette.Teal, width = 7f, label = stringResource(R.string.weight_avg7)),
+            ),
+            firstLabel = Fmt.dayMonth(shown.first().first),
+            lastLabel = Fmt.dayMonth(shown.last().first),
+            reference = goalKg?.let { Units.kgTo(s.weightUnit, it).toFloat() },
+            description = stringResource(R.string.body_trend),
+        )
     }
 }

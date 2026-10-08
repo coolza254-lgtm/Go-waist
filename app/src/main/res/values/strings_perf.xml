@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Run hub (game menu) -->
+    <string name="hub_title">สนามวิ่ง</string>
+    <string name="hub_subtitle">เลือกโหมดแล้วลุยเลย!</string>
+    <string name="hub_modes">เลือกโหมด</string>
+    <string name="hub_menu">เมนู</string>
+    <string name="hub_recent">วิ่งล่าสุด</string>
+    <string name="hub_week_km">สัปดาห์นี้ %1$s</string>
+    <string name="hub_no_vo2">ยังไม่มี VO2 Max — ลอง Cooper Test!</string>
+    <string name="hub_vo2_label">VO2 Max</string>
+
+    <string name="prog_cooper">Cooper Test</string>
+    <string name="prog_interval">Interval</string>
+    <string name="prog_free">Free Run</string>
+    <string name="prog_long">Long Run</string>
+    <string name="prog_cooper_sub">วิ่ง 12 นาที วัด VO2 Max</string>
+    <string name="prog_interval_sub">%1$d × %2$s · พัก %3$s</string>
+    <string name="prog_free_sub">วิ่งอิสระ · เป้า %1$d นาที</string>
+    <string name="prog_free_sub_none">วิ่งอิสระ ไม่จำกัดเวลา</string>
+    <string name="prog_long_sub">เป้า %1$s (ดูแค่ระยะทาง)</string>
+    <string name="prog_cooper_due">ถึงเวลาทดสอบ!</string>
+    <string name="prog_cooper_in">อีก %1$d วัน</string>
+    <string name="prog_level">Lv.%1$d</string>
+    <string name="prog_new_tip">มีคำแนะนำ</string>
+
+    <string name="menu_vo2">VO2 Max</string>
+    <string name="menu_vo2_sub">พัฒนาการรายวัน</string>
+    <string name="menu_perf">Performance</string>
+    <string name="menu_perf_sub">ฟิตเนส ความล้า เพซ</string>
+    <string name="menu_weight">น้ำหนักตัว</string>
+    <string name="menu_weight_sub">แนวโน้ม &amp; BMI</string>
+    <string name="menu_log">บันทึกการวิ่ง</string>
+    <string name="menu_log_sub">ประวัติ สถิติ ปฏิทิน</string>
+    <string name="menu_import">นำเข้าจากภาพ</string>
+    <string name="menu_import_sub">Samsung Health</string>
+
+    <!-- Run types -->
+    <string name="runtype_free">Free Run</string>
+    <string name="runtype_cooper">Cooper Test</string>
+    <string name="runtype_interval">Interval</string>
+    <string name="runtype_long">Long Run</string>
+    <string name="run_type">ประเภทการวิ่ง</string>
+    <string name="run_rpe">ความเหนื่อย (RPE)</string>
+    <string name="run_rpe_hint">1 = สบายมาก · 10 = สุดแรง</string>
+
+    <!-- Program setup -->
+    <string name="setup_start">เริ่มวิ่ง!</string>
+    <string name="setup_record">บันทึกผล</string>
+    <string name="setup_record_only">บันทึกผลอย่างเดียว (ไม่จับเวลา)</string>
+    <string name="setup_total">รวม %1$s</string>
+    <string name="setup_warmup">วอร์มอัพ (นาที)</string>
+    <string name="setup_work">วิ่งเร็ว (วินาที)</string>
+    <string name="setup_rest">พัก/จ็อก (วินาที)</string>
+    <string name="setup_reps">จำนวนรอบ</string>
+    <string name="setup_cooldown">คูลดาวน์ (นาที)</string>
+    <string name="setup_target_pace">เพซเป้าหมายช่วงวิ่งเร็ว: %1$s</string>
+    <string name="setup_target_pace_none">ทำ Cooper Test หรือบันทึกการวิ่งที่มีชีพจร เพื่อให้ Gogo คำนวณเพซเป้าหมาย</string>
+    <string name="setup_auto">ปรับโปรแกรมอัตโนมัติหลังวิ่ง</string>
+    <string name="setup_auto_text">ปิดไว้ = Gogo จะเสนอให้กดยอมรับเอง</string>
+    <string name="setup_free_target">เป้าเวลา (นาที, 0 = ไม่จำกัด)</string>
+    <string name="setup_long_target">เป้าระยะ</string>
+    <string name="setup_long_history">Long run ล่าสุด</string>
+    <string name="setup_cooper_how">วิธีทดสอบ</string>
+    <string name="setup_cooper_steps">1. วอร์มอัพ 10 นาที\n2. วิ่งให้ไกลที่สุดใน 12 นาที (สม่ำเสมอ ไม่ออกตัวแรงเกิน)\n3. จดระยะทางจากนาฬิกา แอป หรือรอบลู่ 400 ม.</string>
+    <string name="setup_cooper_last">ผลทดสอบที่ผ่านมา</string>
+    <string name="setup_cooper_none">ยังไม่เคยทดสอบ</string>
+    <string name="setup_suggest_title">Gogo แนะนำปรับโปรแกรม</string>
+    <string name="setup_suggest_apply">ใช้ค่านี้</string>
+    <string name="reason_easy">รอบที่แล้วดูสบาย (RPE ต่ำ) เพิ่มความท้าทายอีกนิด</string>
+    <string name="reason_on_target">ความหนักกำลังพอดี คงโปรแกรมเดิม</string>
+    <string name="reason_too_hard">รอบที่แล้วหนักมาก เพิ่มเวลาพักให้ฟื้นตัว</string>
+    <string name="reason_incomplete">ทำไม่ครบทุกรอบ ลดรอบลงก่อน</string>
+    <string name="reason_target_reached">ถึงเป้าแล้ว! ขยับเป้าขึ้น (ไม่เกิน 10%%)</string>
+    <string name="reason_short">ระยะยังห่างเป้า ปรับเป้าให้ใกล้ขึ้น</string>
+    <string name="suggest_interval">%1$d × %2$s · พัก %3$s</string>
+
+    <!-- Running HUD -->
+    <string name="hud_rep">รอบ %1$d/%2$d</string>
+    <string name="hud_next">ต่อไป: %1$s</string>
+    <string name="hud_finish">จบและบันทึก</string>
+    <string name="hud_pause">พัก</string>
+    <string name="hud_resume">ไปต่อ</string>
+    <string name="hud_done">ครบเวลา! 🎉</string>
+    <string name="hud_elapsed">เวลาที่วิ่ง</string>
+    <string name="hud_target_left">อีก %1$s ถึงเป้า</string>
+    <string name="hud_target_done">ถึงเป้าเวลาแล้ว!</string>
+    <string name="hud_quit">ยกเลิกการวิ่ง</string>
+    <string name="hud_quit_text">เวลาที่จับไว้จะไม่ถูกบันทึก</string>
+
+    <!-- Result -->
+    <string name="result_title">บันทึกผล %1$s</string>
+    <string name="result_distance_m">ระยะทาง (เมตร)</string>
+    <string name="result_reps_done">ทำได้กี่รอบ</string>
+    <string name="result_import">เติมค่าจากภาพสกรีนช็อต</string>
+    <string name="result_save">บันทึกผล</string>
+    <string name="result_saved">บันทึกแล้ว!</string>
+    <string name="result_vo2_run">VO2 Max จากการวิ่งนี้</string>
+    <string name="result_vo2_now">VO2 Max ปัจจุบัน</string>
+    <string name="result_pace">เพซเฉลี่ย</string>
+    <string name="result_next_target">เป้าครั้งหน้า: %1$s</string>
+    <string name="result_need_distance">ใส่ระยะทางที่วิ่งได้ (จากนาฬิกา แอป หรือภาพสกรีนช็อต) แล้วกดบันทึก!</string>
+
+    <!-- VO2 screen -->
+    <string name="vo2_title">VO2 Max</string>
+    <string name="vo2_unit">ml/kg/min</string>
+    <string name="vo2_change">%1$s ใน 30 วัน</string>
+    <string name="vo2_daily">พัฒนาการรายวัน</string>
+    <string name="vo2_trend">แนวโน้ม</string>
+    <string name="vo2_measured">ค่าที่วัดได้</string>
+    <string name="vo2_range_30">30 วัน</string>
+    <string name="vo2_range_90">90 วัน</string>
+    <string name="vo2_range_365">1 ปี</string>
+    <string name="vo2_level">ระดับความฟิต</string>
+    <string name="vo2_profile_needed">ใส่อายุและเพศ เพื่อเทียบเกณฑ์และคำนวณจากชีพจรให้แม่นขึ้น</string>
+    <string name="vo2_set_profile">ตั้งค่าโปรไฟล์</string>
+    <string name="vo2_empty_title">ยังไม่มีข้อมูล VO2 Max</string>
+    <string name="vo2_empty_text">ทำ Cooper Test 12 นาที หรือบันทึกการวิ่งที่มีชีพจรเฉลี่ย Gogo จะคำนวณให้ทุกวัน</string>
+    <string name="vo2_how">คำนวณอย่างไร</string>
+    <string name="vo2_how_text">• Cooper Test: (ระยะเมตร − 504.9) ÷ 44.73 แม่นที่สุด\n• ชีพจร: เทียบความเร็วกับสัดส่วนชีพจรสำรองที่ใช้ (ต้องใส่อายุ/ชีพจรพัก)\n• เพซ + RPE: สูตร VDOT ของ Daniels ปรับตามความเหนื่อย\nค่ารายวันคือค่าเฉลี่ยถ่วงน้ำหนักที่ให้ความสำคัญกับการวิ่งล่าสุด</string>
+    <string name="vo2_estimates">ค่าที่วัดได้ล่าสุด</string>
+    <string name="method_cooper">Cooper</string>
+    <string name="method_hr">ชีพจร</string>
+    <string name="method_pace">เพซ</string>
+    <string name="level_very_poor">ต้องปรับปรุงมาก</string>
+    <string name="level_poor">ต้องปรับปรุง</string>
+    <string name="level_fair">พอใช้</string>
+    <string name="level_good">ดี</string>
+    <string name="level_excellent">ดีมาก</string>
+    <string name="level_superior">ยอดเยี่ยม</string>
+
+    <!-- Performance -->
+    <string name="perf_title">Performance</string>
+    <string name="perf_fitness">ฟิตเนส</string>
+    <string name="perf_fatigue">ความล้า</string>
+    <string name="perf_form">ความสด</string>
+    <string name="perf_load_chart">ฟิตเนส / ความล้า / ความสด (90 วัน)</string>
+    <string name="perf_load_help">ฟิตเนส = โหลดเฉลี่ย 42 วัน · ความล้า = 7 วัน · ความสด = ฟิตเนส − ความล้า</string>
+    <string name="form_fresh">สดชื่น พร้อมทำสถิติ</string>
+    <string name="form_optimal">กำลังดี ฝึกต่อได้</string>
+    <string name="form_tired">ล้าสะสม ควรเบาลง</string>
+    <string name="form_overreaching">โหลดพุ่งเกิน เสี่ยงบาดเจ็บ!</string>
+    <string name="perf_acwr">อัตราโหลด 7:42 วัน %1$s</string>
+    <string name="perf_predictions">คาดการณ์เวลาแข่ง</string>
+    <string name="perf_paces">เพซสำหรับฝึก</string>
+    <string name="pace_easy">Easy (วิ่งสบาย)</string>
+    <string name="pace_marathon">Marathon</string>
+    <string name="pace_threshold">Threshold (เทมโป)</string>
+    <string name="pace_interval">Interval</string>
+    <string name="pace_repetition">Repetition</string>
+    <string name="perf_hr_zones">โซนชีพจร</string>
+    <string name="perf_zone">โซน %1$d</string>
+    <string name="perf_efficiency">ประสิทธิภาพการวิ่ง (เมตรต่อการเต้นหัวใจ)</string>
+    <string name="perf_efficiency_help">ยิ่งสูงยิ่งดี = วิ่งได้ไกลขึ้นด้วยชีพจรเท่าเดิม</string>
+    <string name="perf_weekly">ระยะต่อสัปดาห์ (กม.)</string>
+    <string name="perf_cooper">ประวัติ Cooper Test</string>
+    <string name="perf_types">30 วันล่าสุดตามประเภท</string>
+    <string name="perf_type_line">%1$d ครั้ง · %2$s</string>
+    <string name="perf_no_data">บันทึกการวิ่งสักครั้งแล้วข้อมูลจะมาแสดงที่นี่</string>
+
+    <!-- Weight -->
+    <string name="weight_title">น้ำหนักตัว</string>
+    <string name="weight_quick">บันทึกน้ำหนักวันนี้</string>
+    <string name="weight_avg7">เฉลี่ย 7 วัน</string>
+    <string name="weight_rate">ต่อสัปดาห์</string>
+    <string name="weight_bmi">BMI</string>
+    <string name="weight_goal_date">ถึงเป้า %1$s ประมาณ %2$s</string>
+    <string name="weight_change7">7 วัน</string>
+    <string name="weight_change30">30 วัน</string>
+    <string name="weight_more">วัดสัดส่วนอื่น</string>
+    <string name="bmi_under">น้ำหนักน้อย</string>
+    <string name="bmi_normal">ปกติ</string>
+    <string name="bmi_over">ท้วม</string>
+    <string name="bmi_obese">อ้วน</string>
+    <string name="weight_need_height">ใส่ส่วนสูงในโปรไฟล์เพื่อดู BMI</string>
+
+    <!-- Profile -->
+    <string name="profile_title">โปรไฟล์ร่างกาย</string>
+    <string name="profile_age">อายุ (ปี)</string>
+    <string name="profile_sex">เพศ</string>
+    <string name="profile_male">ชาย</string>
+    <string name="profile_female">หญิง</string>
+    <string name="profile_height">ส่วนสูง (ซม.)</string>
+    <string name="profile_rest_hr">ชีพจรขณะพัก (bpm)</string>
+    <string name="profile_max_hr">ชีพจรสูงสุด (bpm, เว้นว่าง = คำนวณจากอายุ)</string>
+    <string name="profile_hint">ใช้คำนวณ VO2 Max, โซนชีพจร และ BMI เก็บในเครื่องเท่านั้น</string>
+</resources>

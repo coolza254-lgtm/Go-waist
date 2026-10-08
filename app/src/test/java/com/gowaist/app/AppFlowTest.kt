@@ -14,6 +14,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -67,6 +68,12 @@ class AppFlowTest {
         rule.waitForIdle()
     }
 
+    private fun scrollTag(t: String) {
+        await(t) { rule.onAllNodes(hasTestTag(t)).fetchSemanticsNodes().isNotEmpty() }
+        rule.onNode(hasTestTag(t)).performScrollTo().performClick()
+        rule.waitForIdle()
+    }
+
     /** Scrolls the screen's lazy list until a node with [text] is composed. */
     private fun scrollTo(text: String) {
         await("list") { rule.onAllNodes(hasScrollToIndexAction()).fetchSemanticsNodes().isNotEmpty() }
@@ -95,8 +102,10 @@ class AppFlowTest {
         waitFor("วันนี้")
         waitFor("สัปดาห์นี้")
 
-        // Run tab: empty state, then stats/calendar tabs are hidden until data exists
+        // Run tab: game menu hub, then the run log with its empty state
         click("วิ่ง")
+        waitFor("สนามวิ่ง")
+        scrollTag("menu_log")
         waitFor("ยังไม่มีผลวิ่ง")
 
         // Manual run entry
@@ -113,6 +122,35 @@ class AppFlowTest {
         waitFor("Personal Best")
         click("ปฏิทิน")
         click("ประวัติ")
+        rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
+        rule.waitForIdle()
+
+        // Free run program: start, finish, record result
+        waitFor("สนามวิ่ง")
+        scrollTag("prog_FREE")
+        tag("program_start")
+        tag("hud_finish")
+        waitFor("ระยะทาง", substring = true)
+        rule.onAllNodes(hasSetTextAction())[0].performTextInput("3")
+        rule.onAllNodes(hasSetTextAction())[2].performTextInput("20")
+        tag("result_save")
+        tag("saved_done")
+
+        // Tracking screens
+        waitFor("สนามวิ่ง")
+        scrollTag("menu_vo2")
+        waitFor("VO2 Max", substring = true)
+        rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
+        rule.waitForIdle()
+        scrollTag("menu_perf")
+        waitFor("Performance", substring = true)
+        rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
+        rule.waitForIdle()
+        scrollTag("menu_weight")
+        tag("weight_save")
+        waitFor("70 กก.", substring = true)
+        rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
+        rule.waitForIdle()
 
         // Train tab and its sub-tabs
         click("ฝึก")
@@ -177,7 +215,7 @@ class AppFlowTest {
         click("หน้าหลัก")
         rule.onNodeWithContentDescription("เมนู").performClick()
         click("Body Metrics")
-        waitFor("ยังไม่มีข้อมูลร่างกาย")
+        waitFor("บันทึกน้ำหนักวันนี้")
         rule.activity.onBackPressedDispatcher.onBackPressed()
         rule.onNodeWithContentDescription("เมนู").performClick()
         click("ตั้งค่า")

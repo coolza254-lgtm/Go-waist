@@ -59,6 +59,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.gowaist.app.BuildConfig
 import com.gowaist.app.R
+import androidx.compose.ui.platform.testTag
+import androidx.compose.material3.OutlinedButton
+import com.gowaist.app.ui.perf.ProfileDialog
 import com.gowaist.app.data.repo.BackupRepository
 import com.gowaist.app.data.settings.AppSettings
 import com.gowaist.app.data.settings.SettingsRepository
@@ -126,6 +129,7 @@ fun SettingsScreen(nav: NavHostController, vm: SettingsViewModel = hiltViewModel
     var pendingImport by remember { mutableStateOf<android.net.Uri?>(null) }
     var wipeStep by remember { mutableStateOf(0) }
     var pickTime by remember { mutableStateOf(false) }
+    var editProfile by remember { mutableStateOf(false) }
     var notifAllowed by remember { mutableStateOf(Notifications.canPost(context)) }
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { it?.let { u -> vm.export(u, doneExport) } }
@@ -139,15 +143,25 @@ fun SettingsScreen(nav: NavHostController, vm: SettingsViewModel = hiltViewModel
     Scaffold(topBar = { GwTopBar(stringResource(R.string.set_title), onBack = { nav.popBackStack() }) }, snackbarHost = { SnackbarHost(snack) }) { pad ->
         Column(Modifier.padding(pad).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Section(stringResource(R.string.set_profile)) {
-                var nick by remember(s.nickname) { mutableStateOf(s.nickname) }
-                OutlinedTextField(nick, { nick = it.take(24); vm.update { st -> st.copy(nickname = nick) } }, label = { Text(stringResource(R.string.set_nickname)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                var bw by remember(s.bodyweightKg, s.weightUnit) { mutableStateOf(Format.decimal(Units.kgTo(s.weightUnit, s.bodyweightKg), 1)) }
+                // Local text wins once the user types, so async saves never reset the cursor.
+                var nick by remember { mutableStateOf<String?>(null) }
+                OutlinedTextField(nick ?: s.nickname, { t -> val v = t.take(24); nick = v; vm.update { st -> st.copy(nickname = v) } }, label = { Text(stringResource(R.string.set_nickname)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                var bw by remember(s.weightUnit) { mutableStateOf<String?>(null) }
                 OutlinedTextField(
-                    bw, { t -> bw = t.filter { it.isDigit() || it == '.' }.take(5); bw.toDoubleOrNull()?.takeIf { it in 20.0..660.0 }?.let { v -> vm.update { st -> st.copy(bodyweightKg = Units.toKg(st.weightUnit, v)) } } },
+                    bw ?: Format.decimal(Units.kgTo(s.weightUnit, s.bodyweightKg), 1),
+                    { t -> val v = t.filter { it.isDigit() || it == '.' }.take(5); bw = v; v.toDoubleOrNull()?.takeIf { it in 20.0..660.0 }?.let { x -> vm.update { st -> st.copy(bodyweightKg = Units.toKg(st.weightUnit, x)) } } },
                     label = { Text(stringResource(R.string.set_bodyweight)) }, supportingText = { Text(stringResource(R.string.set_bodyweight_text)) },
                     suffix = { Text(stringResource(if (s.weightUnit == WeightUnit.KG) R.string.unit_kg else R.string.unit_lb)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true, modifier = Modifier.fillMaxWidth(),
                 )
+                OutlinedButton({ editProfile = true }, Modifier.fillMaxWidth().testTag("open_profile")) {
+                    Text(
+                        stringResource(R.string.profile_title) + listOfNotNull(
+                            s.age?.let { " · " + it },
+                            s.heightCm?.let { " · " + Format.decimal(Units.cmTo(s.lengthUnit, it), 0) },
+                        ).joinToString(""),
+                    )
+                }
                 Text(stringResource(R.string.set_equipment), style = MaterialTheme.typography.labelLarge)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Equipment.entries.filter { it != Equipment.NONE }.forEach { e ->
@@ -231,6 +245,9 @@ fun SettingsScreen(nav: NavHostController, vm: SettingsViewModel = hiltViewModel
             confirmButton = { TextButton({ wipeStep = 0; vm.wipe(doneWipe) }, enabled = typed.trim() == word) { Text(stringResource(R.string.action_delete), color = Gw.colors.danger) } },
             dismissButton = { TextButton({ wipeStep = 0 }) { Text(stringResource(R.string.action_cancel)) } },
         )
+    }
+    if (editProfile) {
+        ProfileDialog(s, onSave = { p -> vm.update { it.copy(age = p.age, sex = p.sex, heightCm = p.heightCm, restHr = p.restHr, maxHr = p.maxHr) }; editProfile = false }, onDismiss = { editProfile = false })
     }
     if (pickTime) {
         val state = rememberTimePickerState(s.reminderHour, s.reminderMinute, is24Hour = true)

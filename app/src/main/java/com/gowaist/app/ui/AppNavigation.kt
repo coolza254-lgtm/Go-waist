@@ -70,7 +70,15 @@ import com.gowaist.app.ui.plan.PlanScreen
 import com.gowaist.app.ui.run.RunDetailScreen
 import com.gowaist.app.ui.run.RunEditScreen
 import com.gowaist.app.ui.run.RunImportScreen
-import com.gowaist.app.ui.run.RunScreen
+import com.gowaist.app.ui.run.RunHubScreen
+import com.gowaist.app.ui.run.RunLogScreen
+import com.gowaist.app.ui.run.RunProgramScreen
+import com.gowaist.app.ui.perf.PerformanceScreen
+import com.gowaist.app.ui.perf.Vo2Screen
+import com.gowaist.app.ui.nav.PerformanceRoute
+import com.gowaist.app.ui.nav.RunLogRoute
+import com.gowaist.app.ui.nav.RunProgramRoute
+import com.gowaist.app.ui.nav.Vo2Route
 import com.gowaist.app.ui.settings.SettingsScreen
 import com.gowaist.app.ui.theme.Gw
 import com.gowaist.app.ui.train.ChainEditScreen
@@ -136,7 +144,7 @@ fun AppNavigation(settings: AppSettings) {
                     popExitTransition = { slideOutHorizontally { it / 6 } + fadeOut() },
                 ) {
                     composable<HomeRoute>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { HomeScreen(nav) }
-                    composable<RunTabRoute>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { RunScreen(nav) }
+                    composable<RunTabRoute>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { RunHubScreen(nav) }
                     composable<TrainTabRoute>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { TrainScreen(nav) }
                     composable<PlanTabRoute>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { PlanScreen(nav) }
                     composable<GoalsTabRoute>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { GoalsScreen(nav) }
@@ -145,6 +153,10 @@ fun AppNavigation(settings: AppSettings) {
                     composable<BodyRoute> { BodyScreen(nav) }
                     composable<RunEditRoute> { RunEditScreen(nav) }
                     composable<RunImportRoute> { RunImportScreen(nav) }
+                    composable<RunLogRoute> { RunLogScreen(nav) }
+                    composable<RunProgramRoute> { RunProgramScreen(nav) }
+                    composable<Vo2Route> { Vo2Screen(nav) }
+                    composable<PerformanceRoute> { PerformanceScreen(nav) }
                     composable<RunDetailRoute> { RunDetailScreen(nav, it.toRoute<RunDetailRoute>().id) }
                     composable<ExerciseDetailRoute> { ExerciseDetailScreen(nav) }
                     composable<ExerciseEditRoute> { ExerciseEditScreen(nav) }

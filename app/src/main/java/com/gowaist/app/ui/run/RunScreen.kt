@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -72,6 +71,7 @@ import com.gowaist.app.data.toFacts
 import com.gowaist.app.data.toLocalDate
 import com.gowaist.app.data.toLocalDateTime
 import com.gowaist.app.ui.Fmt
+import com.gowaist.app.ui.GwTopBar
 import com.gowaist.app.ui.LocalAppSettings
 import com.gowaist.app.ui.components.BarChart
 import com.gowaist.app.ui.components.ChartPoint
@@ -89,6 +89,7 @@ import com.gowaist.app.ui.nav.RunEditRoute
 import com.gowaist.app.ui.nav.RunImportRoute
 import com.gowaist.app.ui.theme.Gw
 import com.gowaist.core.Pace
+import com.gowaist.core.perf.RunType
 import com.gowaist.core.Units
 import com.gowaist.core.stats.RunStats
 import com.gowaist.core.stats.weekStart
@@ -110,12 +111,12 @@ class RunViewModel @Inject constructor(runs: RunRepository) : ViewModel() {
 }
 
 @Composable
-fun RunScreen(nav: NavHostController, vm: RunViewModel = hiltViewModel()) {
+fun RunLogScreen(nav: NavHostController, vm: RunViewModel = hiltViewModel()) {
     val runs by vm.runs.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableStateOf(0) }
     var fabMenu by remember { mutableStateOf(false) }
     Scaffold(
-        modifier = Modifier.statusBarsPadding(),
+        topBar = { GwTopBar(stringResource(R.string.menu_log), onBack = { nav.popBackStack() }) },
         floatingActionButton = {
             Box {
                 ExtendedFloatingActionButton(
@@ -134,7 +135,6 @@ fun RunScreen(nav: NavHostController, vm: RunViewModel = hiltViewModel()) {
         },
     ) { pad ->
         Column(Modifier.padding(pad).fillMaxSize()) {
-            Text(stringResource(R.string.run_title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 16.dp, top = 8.dp))
             PrimaryTabRow(selectedTabIndex = tab, containerColor = MaterialTheme.colorScheme.background) {
                 listOf(R.string.run_tab_history, R.string.run_tab_stats, R.string.run_tab_calendar).forEachIndexed { i, t ->
                     Tab(tab == i, { tab = i }, text = { Text(stringResource(t)) })
@@ -216,14 +216,20 @@ private fun RunHistory(runs: List<RunEntity>, open: (Long) -> Unit) {
 fun RunRow(r: RunEntity, onClick: () -> Unit) {
     GameCard(onClick = onClick, contentPadding = PaddingValues(14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconBlob(Icons.AutoMirrored.Rounded.DirectionsRun, Gw.colors.run, size = 46.dp)
+            IconBlob(r.runType.icon(), ProgramColors.of(r.runType), size = 46.dp)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(Fmt.dateShort(r.localDate.toLocalDate()) + " · " + Fmt.time(r.startAt.toLocalDateTime()), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(Fmt.distance(r.distanceM), style = MaterialTheme.typography.titleLarge)
-                Text(Fmt.duration(r.durationSec) + " · " + Fmt.pace(r.avgPaceSecPerKm ?: Pace.secPerKm(r.distanceM, r.durationSec)), style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    if (r.durationSec > 0) Fmt.duration(r.durationSec) + " · " + Fmt.pace(r.avgPaceSecPerKm ?: Pace.secPerKm(r.distanceM, r.durationSec)) else r.runType.label(),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             }
-            if (r.sourceImagePath != null) Icon(Icons.Rounded.Image, null, tint = Gw.colors.muted)
+            Column(horizontalAlignment = Alignment.End) {
+                if (r.runType != RunType.FREE) Pill(r.runType.label(), ProgramColors.of(r.runType))
+                if (r.sourceImagePath != null) Icon(Icons.Rounded.Image, null, tint = Gw.colors.muted)
+            }
         }
         if (r.tags.isNotEmpty()) {
             Spacer(Modifier.height(6.dp))

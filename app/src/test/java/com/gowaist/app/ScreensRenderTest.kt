@@ -120,7 +120,7 @@ class ScreensRenderTest {
 
         // Run detail via manual entry is covered elsewhere; open the import screen shell.
         click("วิ่ง")
-        waitFor("ยังไม่มีผลวิ่ง")
+        waitFor("สนามวิ่ง")
 
         // Plan create + goals editor
         click("แผน")

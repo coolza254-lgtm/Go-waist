@@ -27,3 +27,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable data object PlanCreateRoute
 @Serializable data class GoalEditRoute(val id: Long = 0)
+
+@Serializable data object RunLogRoute
+/** [type] is a [com.gowaist.core.perf.RunType] name. */
+@Serializable data class RunProgramRoute(val type: String)
+@Serializable data object Vo2Route
+@Serializable data object PerformanceRoute
