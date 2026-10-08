@@ -67,7 +67,8 @@ android {
         checkReleaseBuilds = false
     }
     sourceSets {
-        getByName("test").assets.srcDir("$projectDir/schemas")
+        // Robolectric reads assets of the variant under test; schemas are needed by MigrationTest.
+        getByName("debug").assets.srcDir("$projectDir/schemas")
     }
 }
 
