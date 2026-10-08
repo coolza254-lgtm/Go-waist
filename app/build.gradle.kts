@@ -23,6 +23,8 @@ android {
         versionName = (project.findProperty("versionName") as String?) ?: "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
+        // Phones only: ML Kit's on-device OCR library is ~11 MB per ABI.
+        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
 
     signingConfigs {
@@ -61,6 +63,9 @@ android {
     }
     packaging {
         resources.excludes += setOf("/META-INF/{AL2.0,LGPL2.1}", "META-INF/LICENSE*", "META-INF/NOTICE*")
+    }
+    androidResources {
+        localeFilters += listOf("th", "en")
     }
     lint {
         abortOnError = false

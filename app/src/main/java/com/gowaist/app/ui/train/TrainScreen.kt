@@ -601,7 +601,7 @@ private fun StatsTab(vm: TrainViewModel) {
         }
         if (s.records.isNotEmpty()) {
             item { SectionHeader(stringResource(R.string.st_records)) }
-            items(s.records, key = { it.first.id }) { (r, name) -> RecordRow(r, name) }
+            items(s.records, key = { "pr" + it.first.id }) { (r, name) -> RecordRow(r, name) }
         }
         item { Spacer(Modifier.height(24.dp)) }
     }

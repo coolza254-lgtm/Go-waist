@@ -87,6 +87,14 @@ class GoalRepository @Inject constructor(
         )
     }
 
+    /** Current value and progress of every goal, for display. */
+    suspend fun liveProgress(): Map<Long, com.gowaist.core.goals.GoalProgress> {
+        val data = data()
+        return dao.getAll().associate { g ->
+            g.id to GoalEvaluator.progress(GoalSpec(g.type, g.target, g.startDate.toLocalDate(), g.endDate.toLocalDate(), g.exerciseId, g.baseline), data)
+        }
+    }
+
     /** Recomputes progress of every active goal and unlocks rewards and badges. Returns what is new. */
     suspend fun evaluate(today: LocalDate = LocalDate.now()): Achievements = db.withTransaction {
         val data = data()

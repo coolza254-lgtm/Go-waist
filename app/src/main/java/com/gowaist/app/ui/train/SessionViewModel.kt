@@ -26,7 +26,9 @@ import com.gowaist.app.ui.nav.SessionRoute
 import com.gowaist.core.model.SetType
 import com.gowaist.core.model.TrackingType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -63,6 +65,14 @@ class SessionViewModel @Inject constructor(
     val detail: StateFlow<SessionDetail?> = workouts.observeDetail(sessionId).stateIn(viewModelScope, SharingStarted.Eagerly, null)
     val exercises: StateFlow<List<ExerciseEntity>> = library.exercises.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val settings: StateFlow<AppSettings> = settings.settings.stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
+
+    /** Wall clock for the elapsed-time display, ticking once per second while the screen is visible. */
+    val clock: StateFlow<Long> = flow {
+        while (true) {
+            emit(System.currentTimeMillis())
+            delay(1000)
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(1000), System.currentTimeMillis())
 
     val inputs = mutableStateMapOf<Long, SetInput>()
     val memories = mutableStateMapOf<Long, ExerciseMemory>()

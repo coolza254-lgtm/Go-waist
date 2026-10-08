@@ -57,6 +57,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -118,6 +119,7 @@ fun RunScreen(nav: NavHostController, vm: RunViewModel = hiltViewModel()) {
         floatingActionButton = {
             Box {
                 ExtendedFloatingActionButton(
+                    modifier = Modifier.testTag("fab_run"),
                     onClick = { fabMenu = true },
                     icon = { Icon(Icons.Rounded.Add, null) },
                     text = { Text(stringResource(R.string.run_add)) },

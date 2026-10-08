@@ -57,7 +57,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -109,7 +108,6 @@ import com.gowaist.core.WeightUnit
 import com.gowaist.core.mascot.MascotMood
 import com.gowaist.core.model.SetType
 import com.gowaist.core.model.TrackingType
-import kotlinx.coroutines.delay
 import java.time.LocalDateTime
 
 @Composable
@@ -137,12 +135,8 @@ fun SessionScreen(nav: NavHostController, vm: SessionViewModel = hiltViewModel()
     KeepScreenOn(isDraft && settings.keepScreenOn)
     BackHandler(enabled = isDraft) { nav.popBackStack() } // draft stays saved; resume from Home
 
-    val elapsed by produceState(0L, d.session.startAt, isDraft) {
-        while (isDraft) {
-            value = (System.currentTimeMillis() - d.session.startAt) / 1000
-            delay(1000)
-        }
-    }
+    val clock by vm.clock.collectAsStateWithLifecycle()
+    val elapsed = ((clock - d.session.startAt) / 1000).coerceAtLeast(0)
 
     Scaffold(
         topBar = {
@@ -480,6 +474,7 @@ private fun HoldOverlay(state: TimerState.Hold, now: Long, onStop: () -> Unit) {
 private fun FinishDialog(onDismiss: () -> Unit, onFinish: (Int?, String) -> Unit) {
     var feeling by remember { mutableStateOf<Int?>(null) }
     var note by remember { mutableStateOf("") }
+    var noteOpen by remember { mutableStateOf(false) }
     val names = stringArrayResource(R.array.feelings)
     val emojis = listOf("😫", "😓", "🙂", "😄", "🤩")
     AlertDialog(
@@ -500,7 +495,11 @@ private fun FinishDialog(onDismiss: () -> Unit, onFinish: (Int?, String) -> Unit
                         }
                     }
                 }
-                OutlinedTextField(note, { note = it.take(500) }, label = { Text(stringResource(R.string.sess_finish_note)) }, minLines = 2)
+                if (noteOpen) {
+                    OutlinedTextField(note, { note = it.take(500) }, label = { Text(stringResource(R.string.sess_finish_note)) }, minLines = 2)
+                } else {
+                    TextButton({ noteOpen = true }) { Text("+ " + stringResource(R.string.sess_finish_note)) }
+                }
             }
         },
         confirmButton = { TextButton({ onFinish(feeling, note) }) { Text(stringResource(R.string.sess_finish), fontWeight = FontWeight.Bold) } },

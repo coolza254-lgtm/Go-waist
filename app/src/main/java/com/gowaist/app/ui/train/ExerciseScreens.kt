@@ -354,7 +354,7 @@ class ChainEditViewModel @Inject constructor(handle: SavedStateHandle, private v
     private val id = handle.toRoute<ChainEditRoute>().id
     var name by mutableStateOf("")
     var steps by mutableStateOf(listOf<StepDraft>())
-    var chain: ChainEntity? = null
+    var chain by mutableStateOf<ChainEntity?>(null)
     var done by mutableStateOf(false)
     var error by mutableStateOf(false)
     val exercises = library.exercises.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

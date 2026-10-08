@@ -266,7 +266,7 @@ fun HomeScreen(nav: NavHostController, vm: HomeViewModel = hiltViewModel()) {
                 }
             }
         } else {
-            items(s.todayDays, key = { it.id }) { day ->
+            items(s.todayDays, key = { "day" + it.id }) { day ->
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     PlanDayRow(day, day.templateId?.let { s.templateNames[it] }, isToday = true)
                     val pending = day.status == PlanDayStatus.PENDING || day.status == PlanDayStatus.PARTIAL
@@ -304,7 +304,7 @@ fun HomeScreen(nav: NavHostController, vm: HomeViewModel = hiltViewModel()) {
 
         if (s.goals.isNotEmpty()) {
             item { SectionHeader(stringResource(R.string.home_goals)) { androidx.compose.material3.TextButton({ nav.switchTab(GoalsTabRoute) }) { Text(stringResource(R.string.action_see_all)) } } }
-            items(s.goals, key = { it.goal.id }) { g ->
+            items(s.goals, key = { "goal" + it.goal.id }) { g ->
                 GameCard(accent = Gw.colors.goal, onClick = { nav.switchTab(GoalsTabRoute) }) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(g.goal.title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))

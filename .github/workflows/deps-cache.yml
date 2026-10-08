@@ -4,9 +4,6 @@ name: Dependency cache
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ ccr-db481057-xuhr75 ]
-    paths: [ 'gradle/libs.versions.toml', '.github/workflows/deps-cache.yml' ]
 
 permissions:
   contents: write

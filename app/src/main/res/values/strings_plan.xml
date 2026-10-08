@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plan_title">ตารางซ้อม</string>
+    <string name="plan_empty_title">ยังไม่มีแผนซ้อม</string>
+    <string name="plan_empty_text">เลือกแผนสำเร็จรูป หรือจัดตารางเองก็ได้ ใช้ได้ทั้งวิ่งและ Bodyweight</string>
+    <string name="plan_choose">เลือกแผน</string>
+    <string name="plan_add">เพิ่มแผน</string>
+    <string name="plan_week_of">สัปดาห์ที่ %1$d/%2$d</string>
+    <string name="plan_week_range">%1$s – %2$s</string>
+    <string name="plan_progress">ทำได้ %1$d/%2$d วันในสัปดาห์นี้</string>
+    <string name="plan_warnings">ข้อควรระวังเรื่องโหลด</string>
+    <string name="plan_adaptive">ปรับอัตโนมัติ</string>
+    <string name="plan_mode_prebuilt">แผนสำเร็จรูป</string>
+    <string name="plan_mode_custom">กำหนดเอง</string>
+    <string name="plan_pause">หยุดแผนชั่วคราว</string>
+    <string name="plan_resume">ใช้แผนนี้ต่อ</string>
+    <string name="plan_delete">ลบแผน</string>
+    <string name="plan_delete_text">ลบแผนและตารางทั้งหมดของแผนนี้ (ผลวิ่งและเซสชันที่บันทึกไว้ไม่หาย)</string>
+    <string name="plan_shift">เลื่อนแผนออกไป 1 สัปดาห์</string>
+    <string name="plan_shift_done">เลื่อนวันที่ยังไม่ทำออกไป 1 สัปดาห์แล้ว</string>
+    <string name="plan_paused">พักไว้</string>
+    <string name="plan_inactive">แผนที่หยุดไว้</string>
+
+    <string name="warn_heavy_legs">%1$s: ฝึกขาหนักก่อนวัน Long run ขาอาจล้า ลองสลับวัน</string>
+    <string name="warn_no_rest">สัปดาห์ %1$s ไม่มีวันพักเลย ควรพักอย่างน้อย 1 วัน</string>
+    <string name="warn_load_spike">สัปดาห์ %1$s โหลดรวมเพิ่มขึ้น %2$d%% จากสัปดาห์ก่อน (ควรไม่เกิน ~10–30%%)</string>
+    <string name="warn_back_to_back">%1$s: วันหนักติดกัน 2 วัน ระวังความล้าสะสม</string>
+
+    <string name="day_edit">แก้ไขวัน</string>
+    <string name="day_type">ประเภท</string>
+    <string name="day_distance">ระยะเป้าหมาย</string>
+    <string name="day_duration">เวลา (นาที)</string>
+    <string name="day_template">Template</string>
+    <string name="day_template_none">ไม่ระบุ</string>
+    <string name="day_note">โน้ต</string>
+    <string name="day_reminder_off">ปิดการแจ้งเตือนวันนี้</string>
+    <string name="day_delete">ลบวันนี้ออกจากแผน</string>
+    <string name="day_start">เริ่มเลย</string>
+
+    <string name="create_title">สร้างแผนซ้อม</string>
+    <string name="create_tab_prebuilt">สำเร็จรูป</string>
+    <string name="create_tab_custom">กำหนดเอง</string>
+    <string name="create_weeks">%1$d สัปดาห์</string>
+    <string name="create_level">ระดับ: %1$s</string>
+    <string name="create_start">เริ่มวันที่</string>
+    <string name="create_this_week">สัปดาห์นี้</string>
+    <string name="create_next_week">สัปดาห์หน้า</string>
+    <string name="create_adaptive">ปรับแผนอัตโนมัติตามผลจริง</string>
+    <string name="create_adaptive_text">Gogo จะแนะนำเพิ่ม/ลดระยะวิ่ง (ไม่เกิน 10%%/สัปดาห์) และเพซเป้าหมายใหม่ คุณกดยอมรับเองทุกครั้ง</string>
+    <string name="create_use">ใช้แผนนี้</string>
+    <string name="create_name">ชื่อแผน</string>
+    <string name="create_name_default">ตารางของฉัน</string>
+    <string name="create_weeks_label">จำนวนสัปดาห์</string>
+    <string name="create_preview_warn">ตรวจโหลดของตาราง</string>
+    <string name="create_no_warn">ตารางสมดุลดี มีวันพัก ไม่ชนกัน 👍</string>
+    <string name="create_preview">ตัวอย่างสัปดาห์แรก</string>
+    <string name="create_runs_per_week">วิ่ง %1$d วัน · BW %2$d วัน · พัก %3$d วัน</string>
+</resources>
