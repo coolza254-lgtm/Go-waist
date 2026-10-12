@@ -3,7 +3,6 @@ package com.gowaist.app.data.repo
 import com.gowaist.app.data.db.RunEntity
 import com.gowaist.app.di.ApplicationScope
 import kotlinx.coroutines.CoroutineScope
-import com.gowaist.app.data.db.SetRow
 import com.gowaist.app.data.settings.SettingsRepository
 import com.gowaist.app.data.toLocalDate
 import com.gowaist.core.perf.DailyVo2
@@ -56,24 +55,21 @@ fun RunEntity.toSample() = RunSample(id, localDate.toLocalDate(), distanceM, dur
 
 /**
  * Everything the VO2 max and performance screens show, computed off the main thread from runs,
- * workout sessions and the profile. Shared so several screens reuse one computation.
+ * and the profile. Shared so several screens reuse one computation.
  */
 @Singleton
 class PerformanceRepository @Inject constructor(
     runs: RunRepository,
-    workouts: WorkoutRepository,
     settings: SettingsRepository,
     @ApplicationScope scope: CoroutineScope,
 ) {
-    val data: Flow<PerformanceData> = combine(runs.runs, workouts.finishedSessions, workouts.setRows, settings.settings) { runList, sessions, rows, s ->
-        compute(runList, sessions.map { Triple(it.id, it.localDate, ((it.endAt ?: it.startAt) - it.startAt) / 1000) }, rows, s.profile, LocalDate.now())
+    val data: Flow<PerformanceData> = combine(runs.runs, settings.settings) { runList, s ->
+        compute(runList, s.profile, LocalDate.now())
     }.flowOn(Dispatchers.Default).shareIn(scope, SharingStarted.WhileSubscribed(10_000), replay = 1)
 
     companion object {
         fun compute(
             runList: List<RunEntity>,
-            sessions: List<Triple<Long, String, Long>>,
-            rows: List<SetRow>,
             profile: Profile,
             today: LocalDate,
         ): PerformanceData {
@@ -83,10 +79,6 @@ class PerformanceRepository @Inject constructor(
 
             val loads = HashMap<LocalDate, Double>()
             samples.forEach { r -> loads.merge(r.date, TrainingLoad.load(r.durationSec, r.avgHr, r.rpe, profile), Double::plus) }
-            val rpeBySession = rows.groupBy { it.sessionId }.mapValues { (_, l) -> l.mapNotNull { it.set.rpe }.takeIf { it.isNotEmpty() }?.average() }
-            sessions.forEach { (id, date, sec) ->
-                loads.merge(date.toLocalDate(), TrainingLoad.load(sec, null, rpeBySession[id] ?: 5.5, profile), Double::plus)
-            }
             val load = TrainingLoad.series(loads, today.minusDays(89), today)
 
             val cooper = runList.filter { it.runType == RunType.COOPER && it.durationSec > 0 }.sortedByDescending { it.startAt }.map {

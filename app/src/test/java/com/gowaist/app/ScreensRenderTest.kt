@@ -41,10 +41,10 @@ class ScreensRenderTest {
 
     @Before
     fun launch() {
-        // Skip onboarding and use the dark theme before the activity starts.
+        // Use the dark theme before the activity starts.
         runBlocking {
             SettingsRepository(ApplicationProvider.getApplicationContext()).update {
-                it.copy(onboardingDone = true, themeMode = ThemeMode.DARK)
+                it.copy(themeMode = ThemeMode.DARK)
             }
         }
         scenario = ActivityScenario.launch(MainActivity::class.java)
@@ -82,70 +82,18 @@ class ScreensRenderTest {
     }
 
     @Test
-    fun editorsAndDetails() {
-        waitFor("วันนี้")
-
-        // Exercise detail + editor
-        click("ฝึก")
-        click("คลังท่า")
-        waitFor("ครันช์")
-        click("ครันช์")
-        waitFor("วิธีทำ")
-        rule.onAllNodes(hasContentDescription("แก้ไข")).onFirst().performClick()
-        waitFor("ชื่อท่า (ไทย)")
+    fun tabsAndEditorsRenderInDarkMode() {
+        waitFor("Go waist")
+        click("ประวัติ")
+        waitFor("ยังไม่มีผลวิ่ง")
+        click("พัฒนาการ")
+        waitFor("VO2 Max")
+        click("รองเท้า")
+        click("เพิ่มรองเท้า")
+        waitFor("ความทนทาน")
         back()
-        back()
-        click("เพิ่มท่าเอง")
-        waitFor("เพิ่มท่าใหม่")
-        back()
-
-        // Chain editor
-        click("สายความก้าวหน้า")
-        waitFor("สายวิดพื้น")
-        rule.onAllNodes(hasContentDescription("แก้ไข")).onFirst().performClick()
-        waitFor("แก้ไขสาย")
-        back()
-
-        // Template editor and interval timer setup
-        click("เริ่มฝึก")
-        waitFor("สร้าง Template")
-        click("สร้าง Template")
-        waitFor("Template ใหม่")
-        back()
-        click("ตัวจับเวลา EMOM / AMRAP / Tabata")
-        waitFor("ทำ 20 วินาที พัก 10 วินาที")
-        click("EMOM")
-        waitFor("รวม")
-        back()
-
-        // Run detail via manual entry is covered elsewhere; open the import screen shell.
-        click("วิ่ง")
-        waitFor("สนามวิ่ง")
-
-        // Plan create + goals editor
-        click("แผน")
-        click("เลือกแผน")
-        waitFor("สร้างแผนซ้อม")
-        back()
-        click("เป้าหมาย")
-        rule.onNode(hasTestTag("fab_goal")).performClick()
-        waitFor("ชนิดเป้าหมาย")
-        click("ค้างท่าได้นาน")
-        waitFor("ท่า:")
-        back()
-
-        // Settings and body metrics
         click("หน้าหลัก")
-        rule.onAllNodes(hasContentDescription("เมนู")).onFirst().performClick()
-        click("ตั้งค่า")
-        waitFor("หน่วย")
-        scrollTo("ลบข้อมูลทั้งหมด")
-        click("ลบข้อมูลทั้งหมด")
-        waitFor("แน่ใจไหม?")
-        click("ยกเลิก")
+        click("นำเข้าจาก Samsung Health")
         back()
-        rule.onAllNodes(hasContentDescription("เมนู")).onFirst().performClick()
-        click("Body Metrics")
-        waitFor("ยังไม่มีข้อมูลร่างกาย")
     }
 }

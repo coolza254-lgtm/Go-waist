@@ -10,11 +10,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
-import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.EmojiEvents
-import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material.icons.automirrored.rounded.List
+import androidx.compose.material.icons.automirrored.rounded.ShowChart
+import androidx.compose.material.icons.rounded.Hiking
 import androidx.compose.material.icons.rounded.Home
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -27,7 +28,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -47,63 +47,44 @@ import com.gowaist.app.ui.goals.GoalEditScreen
 import com.gowaist.app.ui.goals.GoalsScreen
 import com.gowaist.app.ui.home.HomeScreen
 import com.gowaist.app.ui.nav.BodyRoute
-import com.gowaist.app.ui.nav.ChainEditRoute
-import com.gowaist.app.ui.nav.ExerciseDetailRoute
-import com.gowaist.app.ui.nav.ExerciseEditRoute
 import com.gowaist.app.ui.nav.GoalEditRoute
-import com.gowaist.app.ui.nav.GoalsTabRoute
+import com.gowaist.app.ui.nav.GoalsRoute
+import com.gowaist.app.ui.nav.HistoryRoute
 import com.gowaist.app.ui.nav.HomeRoute
-import com.gowaist.app.ui.nav.IntervalTimerRoute
-import com.gowaist.app.ui.nav.PlanCreateRoute
-import com.gowaist.app.ui.nav.PlanTabRoute
+import com.gowaist.app.ui.nav.PerformanceRoute
+import com.gowaist.app.ui.nav.ProgressRoute
 import com.gowaist.app.ui.nav.RunDetailRoute
 import com.gowaist.app.ui.nav.RunEditRoute
 import com.gowaist.app.ui.nav.RunImportRoute
-import com.gowaist.app.ui.nav.RunTabRoute
-import com.gowaist.app.ui.nav.SessionRoute
-import com.gowaist.app.ui.nav.SessionSummaryRoute
 import com.gowaist.app.ui.nav.SettingsRoute
-import com.gowaist.app.ui.nav.TemplateEditRoute
-import com.gowaist.app.ui.nav.TrainTabRoute
-import com.gowaist.app.ui.plan.PlanCreateScreen
-import com.gowaist.app.ui.plan.PlanScreen
+import com.gowaist.app.ui.nav.ShoeEditRoute
+import com.gowaist.app.ui.nav.ShoesRoute
+import com.gowaist.app.ui.nav.Vo2Route
+import com.gowaist.app.ui.perf.PerformanceScreen
+import com.gowaist.app.ui.perf.ProgressScreen
+import com.gowaist.app.ui.perf.Vo2Screen
+import com.gowaist.app.ui.run.HistoryScreen
 import com.gowaist.app.ui.run.RunDetailScreen
 import com.gowaist.app.ui.run.RunEditScreen
 import com.gowaist.app.ui.run.RunImportScreen
-import com.gowaist.app.ui.run.RunHubScreen
-import com.gowaist.app.ui.run.RunLogScreen
-import com.gowaist.app.ui.run.RunProgramScreen
-import com.gowaist.app.ui.perf.PerformanceScreen
-import com.gowaist.app.ui.perf.Vo2Screen
-import com.gowaist.app.ui.nav.PerformanceRoute
-import com.gowaist.app.ui.nav.RunLogRoute
-import com.gowaist.app.ui.nav.RunProgramRoute
-import com.gowaist.app.ui.nav.Vo2Route
 import com.gowaist.app.ui.settings.SettingsScreen
+import com.gowaist.app.ui.shoes.ShoeEditScreen
+import com.gowaist.app.ui.shoes.ShoesScreen
 import com.gowaist.app.ui.theme.Gw
-import com.gowaist.app.ui.train.ChainEditScreen
-import com.gowaist.app.ui.train.ExerciseDetailScreen
-import com.gowaist.app.ui.train.ExerciseEditScreen
-import com.gowaist.app.ui.train.IntervalTimerScreen
-import com.gowaist.app.ui.train.SessionScreen
-import com.gowaist.app.ui.train.SessionSummaryScreen
-import com.gowaist.app.ui.train.TemplateEditScreen
-import com.gowaist.app.ui.train.TrainScreen
 import kotlin.reflect.KClass
 
 val LocalAppSettings = staticCompositionLocalOf { AppSettings() }
 
-private data class Tab(val route: Any, val cls: KClass<*>, val label: Int, val icon: ImageVector, val color: @Composable () -> Color)
+private data class Tab(val route: Any, val cls: KClass<*>, val label: Int, val icon: ImageVector)
 
 @Composable
 fun AppNavigation(settings: AppSettings) {
     val nav = rememberNavController()
     val tabs = listOf(
-        Tab(HomeRoute, HomeRoute::class, R.string.nav_home, Icons.Rounded.Home) { MaterialTheme.colorScheme.primary },
-        Tab(RunTabRoute, RunTabRoute::class, R.string.nav_run, Icons.AutoMirrored.Rounded.DirectionsRun) { Gw.colors.run },
-        Tab(TrainTabRoute, TrainTabRoute::class, R.string.nav_train, Icons.Rounded.FitnessCenter) { Gw.colors.train },
-        Tab(PlanTabRoute, PlanTabRoute::class, R.string.nav_plan, Icons.Rounded.CalendarMonth) { Gw.colors.plan },
-        Tab(GoalsTabRoute, GoalsTabRoute::class, R.string.nav_goals, Icons.Rounded.EmojiEvents) { Gw.colors.goal },
+        Tab(HomeRoute, HomeRoute::class, R.string.nav_home, Icons.Rounded.Home),
+        Tab(HistoryRoute, HistoryRoute::class, R.string.nav_history, Icons.AutoMirrored.Rounded.List),
+        Tab(ProgressRoute, ProgressRoute::class, R.string.nav_progress, Icons.AutoMirrored.Rounded.ShowChart),
+        Tab(ShoesRoute, ShoesRoute::class, R.string.nav_shoes, Icons.Rounded.Hiking),
     )
     val entry by nav.currentBackStackEntryAsState()
     val dest = entry?.destination
@@ -114,21 +95,25 @@ fun AppNavigation(settings: AppSettings) {
             containerColor = MaterialTheme.colorScheme.background,
             bottomBar = {
                 if (onTab) {
-                    NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
-                        tabs.forEach { t ->
-                            val selected = dest?.hasRoute(t.cls) == true
-                            val c = t.color()
-                            NavigationBarItem(
-                                selected = selected,
-                                onClick = { nav.switchTab(t.route) },
-                                icon = { Icon(t.icon, contentDescription = null) },
-                                label = { Text(stringResource(t.label), fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Medium) },
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = Color.White,
-                                    indicatorColor = c,
-                                    selectedTextColor = c,
-                                ),
-                            )
+                    Column {
+                        HorizontalDivider(thickness = 1.5.dp, color = Gw.colors.ink)
+                        NavigationBar(containerColor = Gw.colors.card, tonalElevation = 0.dp) {
+                            tabs.forEach { t ->
+                                val selected = dest?.hasRoute(t.cls) == true
+                                NavigationBarItem(
+                                    selected = selected,
+                                    onClick = { nav.switchTab(t.route) },
+                                    icon = { Icon(t.icon, contentDescription = null) },
+                                    label = { Text(stringResource(t.label), fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
+                                    colors = NavigationBarItemDefaults.colors(
+                                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                        unselectedIconColor = Gw.colors.muted,
+                                        unselectedTextColor = Gw.colors.muted,
+                                    ),
+                                )
+                            }
                         }
                     }
                 }
@@ -144,29 +129,20 @@ fun AppNavigation(settings: AppSettings) {
                     popExitTransition = { slideOutHorizontally { it / 6 } + fadeOut() },
                 ) {
                     composable<HomeRoute>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { HomeScreen(nav) }
-                    composable<RunTabRoute>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { RunHubScreen(nav) }
-                    composable<TrainTabRoute>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { TrainScreen(nav) }
-                    composable<PlanTabRoute>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { PlanScreen(nav) }
-                    composable<GoalsTabRoute>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { GoalsScreen(nav) }
+                    composable<HistoryRoute>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { HistoryScreen(nav) }
+                    composable<ProgressRoute>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { ProgressScreen(nav) }
+                    composable<ShoesRoute>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) { ShoesScreen(nav) }
 
                     composable<SettingsRoute> { SettingsScreen(nav) }
                     composable<BodyRoute> { BodyScreen(nav) }
-                    composable<RunEditRoute> { RunEditScreen(nav) }
-                    composable<RunImportRoute> { RunImportScreen(nav) }
-                    composable<RunLogRoute> { RunLogScreen(nav) }
-                    composable<RunProgramRoute> { RunProgramScreen(nav) }
                     composable<Vo2Route> { Vo2Screen(nav) }
                     composable<PerformanceRoute> { PerformanceScreen(nav) }
-                    composable<RunDetailRoute> { RunDetailScreen(nav, it.toRoute<RunDetailRoute>().id) }
-                    composable<ExerciseDetailRoute> { ExerciseDetailScreen(nav) }
-                    composable<ExerciseEditRoute> { ExerciseEditScreen(nav) }
-                    composable<ChainEditRoute> { ChainEditScreen(nav) }
-                    composable<TemplateEditRoute> { TemplateEditScreen(nav) }
-                    composable<SessionRoute> { SessionScreen(nav) }
-                    composable<SessionSummaryRoute> { SessionSummaryScreen(nav) }
-                    composable<IntervalTimerRoute> { IntervalTimerScreen(nav) }
-                    composable<PlanCreateRoute> { PlanCreateScreen(nav) }
+                    composable<GoalsRoute> { GoalsScreen(nav) }
                     composable<GoalEditRoute> { GoalEditScreen(nav) }
+                    composable<RunEditRoute> { RunEditScreen(nav) }
+                    composable<RunImportRoute> { RunImportScreen(nav) }
+                    composable<RunDetailRoute> { RunDetailScreen(nav, it.toRoute<RunDetailRoute>().id) }
+                    composable<ShoeEditRoute> { ShoeEditScreen(nav) }
                 }
             }
         }

@@ -55,6 +55,8 @@ import com.gowaist.app.R
 import com.gowaist.app.data.db.RunEntity
 import com.gowaist.app.data.ocr.OcrService
 import com.gowaist.app.data.repo.RunRepository
+import com.gowaist.app.data.repo.ShoeRepository
+import androidx.compose.material3.Icon
 import com.gowaist.app.data.settings.SettingsRepository
 import com.gowaist.app.data.toLocalDate
 import com.gowaist.app.domain.ActivityCoordinator
@@ -64,10 +66,8 @@ import com.gowaist.app.ui.components.ConfirmDialog
 import com.gowaist.app.ui.components.EmptyState
 import com.gowaist.app.ui.components.GameButton
 import com.gowaist.app.ui.components.LocalImage
-import com.gowaist.app.ui.components.Mascot
 import com.gowaist.app.ui.nav.RunEditRoute
 import com.gowaist.app.ui.theme.Gw
-import com.gowaist.core.mascot.MascotMood
 import com.gowaist.core.ocr.ParsedRun
 import com.gowaist.core.ocr.RunTextParser
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -102,8 +102,8 @@ class RunSaver(
             runs.deleteImageFile(form.existingImagePath)
             path = null
         }
-        val (id, records) = runs.save(draft.copy(sourceImagePath = path))
-        coordinator.afterChange(records)
+        val (id, _) = runs.save(draft.copy(sourceImagePath = path))
+        coordinator.afterChange()
         return Result.Saved(id)
     }
 }
@@ -113,8 +113,10 @@ class RunEditViewModel @Inject constructor(
     handle: SavedStateHandle,
     private val runs: RunRepository,
     private val settings: SettingsRepository,
+    private val shoeRepo: ShoeRepository,
     coordinator: ActivityCoordinator,
 ) : ViewModel() {
+    val shoes = shoeRepo.shoes.map { l -> l.map { it.shoe } }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     private val runId = handle.toRoute<RunEditRoute>().runId
     private val saver = RunSaver(runs, coordinator)
     var form by mutableStateOf<RunForm?>(null)
@@ -128,7 +130,11 @@ class RunEditViewModel @Inject constructor(
             val s = settings.current()
             val f = RunForm(s.distanceUnit)
             f.keepImage = s.keepRunImages
-            if (runId != 0L) runs.get(runId)?.let { f.fill(it); f.keepImage = it.sourceImagePath != null || s.keepRunImages }
+            if (runId != 0L) {
+                runs.get(runId)?.let { f.fill(it); f.keepImage = it.sourceImagePath != null || s.keepRunImages }
+            } else {
+                f.shoeId = shoeRepo.main()?.id
+            }
             form = f
         }
     }
@@ -147,12 +153,13 @@ class RunEditViewModel @Inject constructor(
 fun RunEditScreen(nav: NavHostController, vm: RunEditViewModel = hiltViewModel()) {
     val form = vm.form
     val tags by vm.existingTags.collectAsStateWithLifecycle()
+    val shoes by vm.shoes.collectAsStateWithLifecycle()
     LaunchedEffect(vm.done) { if (vm.done) nav.popBackStack() }
     Scaffold(
         topBar = { GwTopBar(stringResource(if (form?.id ?: 0L != 0L) R.string.run_edit_title else R.string.run_new_title), onBack = { nav.popBackStack() }) },
         bottomBar = {
             Box(Modifier.navigationBarsPadding().imePadding().padding(16.dp)) {
-                GameButton(stringResource(R.string.action_save), { vm.save() }, color = Gw.colors.run, icon = Icons.Rounded.Check, big = true, modifier = Modifier.fillMaxWidth())
+                GameButton(stringResource(R.string.action_save), { vm.save() }, icon = Icons.Rounded.Check, big = true, modifier = Modifier.fillMaxWidth())
             }
         },
     ) { pad ->
@@ -162,7 +169,7 @@ fun RunEditScreen(nav: NavHostController, vm: RunEditViewModel = hiltViewModel()
                 LocalImage(form.existingImagePath, null, Modifier.fillMaxWidth().heightIn(max = 220.dp).clip(RoundedCornerShape(16.dp)), contentScale = ContentScale.Crop)
                 KeepImageSwitch(form)
             }
-            RunFormContent(form, tags)
+            RunFormContent(form, tags, shoes = shoes)
             Spacer(Modifier.height(24.dp))
         }
     }
@@ -198,8 +205,10 @@ class RunImportViewModel @Inject constructor(
     private val runs: RunRepository,
     private val settings: SettingsRepository,
     private val ocr: OcrService,
+    private val shoeRepo: ShoeRepository,
     coordinator: ActivityCoordinator,
 ) : ViewModel() {
+    val shoes = shoeRepo.shoes.map { l -> l.map { it.shoe } }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     private val saver = RunSaver(runs, coordinator)
     var items by mutableStateOf<List<ImportItem>>(emptyList())
     var index by mutableStateOf(0)
@@ -232,6 +241,7 @@ class RunImportViewModel @Inject constructor(
             item.parsed?.let { fill(it) } ?: run { lowConfidence = RunField.entries.toSet() - RunField.PACE }
             imageUri = item.uri
             keepImage = s.keepRunImages
+            shoeId = shoeRepo.main()?.id
         }
     }
 
@@ -254,6 +264,7 @@ class RunImportViewModel @Inject constructor(
 fun RunImportScreen(nav: NavHostController, vm: RunImportViewModel = hiltViewModel()) {
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(10)) { vm.onPicked(it) }
     val tags by vm.existingTags.collectAsStateWithLifecycle()
+    val shoes by vm.shoes.collectAsStateWithLifecycle()
     var zoom by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         if (vm.items.isEmpty()) picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
@@ -271,7 +282,7 @@ fun RunImportScreen(nav: NavHostController, vm: RunImportViewModel = hiltViewMod
         bottomBar = {
             if (form != null) {
                 Box(Modifier.navigationBarsPadding().imePadding().padding(16.dp)) {
-                    GameButton(stringResource(R.string.action_save), { vm.save() }, color = Gw.colors.run, icon = Icons.Rounded.Check, big = true, modifier = Modifier.fillMaxWidth())
+                    GameButton(stringResource(R.string.action_save), { vm.save() }, icon = Icons.Rounded.Check, big = true, modifier = Modifier.fillMaxWidth())
                 }
             }
         },
@@ -279,7 +290,6 @@ fun RunImportScreen(nav: NavHostController, vm: RunImportViewModel = hiltViewMod
         Box(Modifier.padding(pad).fillMaxSize()) {
             when {
                 vm.reading -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Mascot(MascotMood.CHEER, Modifier.size(140.dp))
                     CircularProgressIndicator()
                     Spacer(Modifier.height(12.dp))
                     Text(stringResource(R.string.run_reading), style = MaterialTheme.typography.titleMedium)
@@ -287,7 +297,6 @@ fun RunImportScreen(nav: NavHostController, vm: RunImportViewModel = hiltViewMod
                 vm.finished -> EmptyState(
                     title = stringResource(R.string.run_all_done),
                     message = stringResource(R.string.run_count, vm.saved),
-                    mood = MascotMood.PROUD,
                     actionText = stringResource(R.string.action_done),
                     onAction = { nav.popBackStack() },
                     modifier = Modifier.align(Alignment.Center),
@@ -301,14 +310,14 @@ fun RunImportScreen(nav: NavHostController, vm: RunImportViewModel = hiltViewMod
                     )
                     if (item.parsed == null) Text(stringResource(R.string.run_ocr_failed), color = Gw.colors.warning, modifier = Modifier.padding(top = 8.dp))
                     KeepImageSwitch(form)
-                    RunFormContent(form, tags)
+                    RunFormContent(form, tags, shoes = shoes)
                     Spacer(Modifier.height(24.dp))
                 }
                 else -> Column(Modifier.align(Alignment.Center).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Mascot(MascotMood.HAPPY, Modifier.size(140.dp))
+                    Icon(Icons.Rounded.PhotoLibrary, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(56.dp))
                     Text(stringResource(R.string.run_pick_images), style = MaterialTheme.typography.titleLarge)
                     Text(stringResource(R.string.run_pick_text), textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    GameButton(stringResource(R.string.run_pick_images), { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, color = Gw.colors.run, icon = Icons.Rounded.PhotoLibrary, modifier = Modifier.fillMaxWidth())
+                    GameButton(stringResource(R.string.run_pick_images), { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, icon = Icons.Rounded.PhotoLibrary, modifier = Modifier.fillMaxWidth())
                 }
             }
         }

@@ -1,6 +1,5 @@
 package com.gowaist.core.perf
 
-import com.gowaist.core.timer.PhaseKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -99,28 +98,5 @@ class PerformanceTest {
         assertTrue(s.goalDate!!.isAfter(today))
         assertEquals(WeightTrend.BmiClass.OBESE, WeightTrend.bmiClass(s.bmi!!))
         assertEquals(WeightTrend.BmiClass.OVER, WeightTrend.bmiClass(24.0))
-    }
-
-    @Test
-    fun `interval program phases and adaptation`() {
-        val c = IntervalConfig(warmupMin = 10, workSec = 60, restSec = 90, reps = 6, cooldownMin = 5)
-        val phases = RunProgramRules.intervalPhases(c)
-        assertEquals(1 + 1 + 6 + 5 + 1, phases.size)
-        assertEquals(PhaseKind.COOLDOWN, phases.last().kind)
-        assertEquals(7, RunProgramRules.adaptInterval(IntervalResult(c, 6), 5.0).next.reps)
-        assertEquals(AdjustReason.ON_TARGET, RunProgramRules.adaptInterval(IntervalResult(c, 6), 7.5).reason)
-        assertEquals(5, RunProgramRules.adaptInterval(IntervalResult(c, 4), 9.0).next.reps)
-        assertEquals(105, RunProgramRules.adaptInterval(IntervalResult(c, 6), 9.5).next.restSec)
-        assertEquals(75, RunProgramRules.adaptInterval(IntervalResult(c.copy(reps = 12), 12), 5.0).next.workSec)
-    }
-
-    @Test
-    fun `long run target progression and cooper schedule`() {
-        assertEquals(9.0, RunProgramRules.adaptLongRun(LongRunConfig(8.0), 8.1).next.targetKm, 0.0)
-        assertEquals(8.0, RunProgramRules.adaptLongRun(LongRunConfig(8.0), 7.0).next.targetKm, 0.0)
-        assertEquals(AdjustReason.SHORT_OF_TARGET, RunProgramRules.adaptLongRun(LongRunConfig(10.0), 5.0).reason)
-        assertTrue(RunProgramRules.cooperDue(CooperConfig(null), today))
-        assertTrue(!RunProgramRules.cooperDue(CooperConfig(today.minusDays(5).toString()), today))
-        assertEquals(23, RunProgramRules.daysUntilCooper(CooperConfig(today.minusDays(5).toString()), today))
     }
 }

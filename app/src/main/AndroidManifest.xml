@@ -3,10 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!-- No internet, location, camera or storage permissions: everything stays on the device. -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <!-- ML Kit's manifest asks for network access for usage logging; the app works fully offline. -->
     <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
@@ -33,15 +29,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <service
-            android:name=".timer.WorkoutTimerService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Workout rest, hold and interval timers that must keep counting with the screen off" />
-        </service>
 
         <receiver
             android:name=".widget.GoWaistWidgetReceiver"

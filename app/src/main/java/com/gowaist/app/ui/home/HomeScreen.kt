@@ -2,7 +2,6 @@ package com.gowaist.app.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,340 +10,269 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
-import androidx.compose.material.icons.rounded.Backup
-import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.EditNote
-import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.LocalFireDepartment
-import androidx.compose.material.icons.rounded.MonitorWeight
-import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material.icons.rounded.PhotoLibrary
-import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.gowaist.app.R
-import com.gowaist.app.data.db.GoalWithReward
-import com.gowaist.app.data.db.PlanDayEntity
-import com.gowaist.app.data.db.RecordDao
-import com.gowaist.app.data.db.SessionEntity
+import com.gowaist.app.data.db.GoalEntity
+import com.gowaist.app.data.db.RunEntity
 import com.gowaist.app.data.repo.GoalRepository
-import com.gowaist.app.data.repo.LibraryRepository
-import com.gowaist.app.data.repo.PlanRepository
+import com.gowaist.app.data.repo.PerformanceRepository
 import com.gowaist.app.data.repo.RunRepository
-import com.gowaist.app.data.repo.WorkoutRepository
+import com.gowaist.app.data.repo.ShoeRepository
+import com.gowaist.app.data.settings.AppSettings
 import com.gowaist.app.data.settings.SettingsRepository
 import com.gowaist.app.data.toLocalDate
 import com.gowaist.app.data.toLocalDateTime
-import com.gowaist.app.domain.SuggestionEngine
-import com.gowaist.app.domain.SuggestionItem
 import com.gowaist.app.ui.Fmt
+import com.gowaist.app.ui.LocalAppSettings
+import com.gowaist.app.ui.switchTab
 import com.gowaist.app.ui.components.GameButton
 import com.gowaist.app.ui.components.GameCard
 import com.gowaist.app.ui.components.GameProgressBar
-import com.gowaist.app.ui.components.MascotSays
-import com.gowaist.app.ui.components.PlanDayRow
+import com.gowaist.app.ui.components.HpBar
+import com.gowaist.app.ui.components.Pill
 import com.gowaist.app.ui.components.SectionHeader
-import com.gowaist.app.ui.components.StatTile
-import com.gowaist.app.ui.components.SuggestionCard
-import com.gowaist.app.ui.components.WeekStrip
-import com.gowaist.app.ui.nav.BodyRoute
-import com.gowaist.app.ui.nav.GoalsTabRoute
-import com.gowaist.app.ui.nav.PlanTabRoute
+import com.gowaist.app.ui.components.ShoeIcon
+import com.gowaist.app.ui.components.Sparkline
+import com.gowaist.app.ui.components.StatBlock
+import com.gowaist.app.ui.components.WeekBars
+import com.gowaist.app.ui.components.contentColor
+import com.gowaist.app.ui.components.label
+import com.gowaist.app.ui.components.labelRes
+import com.gowaist.app.ui.nav.GoalsRoute
+import com.gowaist.app.ui.nav.RunDetailRoute
 import com.gowaist.app.ui.nav.RunEditRoute
 import com.gowaist.app.ui.nav.RunImportRoute
-import com.gowaist.app.ui.nav.SessionRoute
 import com.gowaist.app.ui.nav.SettingsRoute
-import com.gowaist.app.ui.switchTab
+import com.gowaist.app.ui.nav.ShoesRoute
+import com.gowaist.app.ui.nav.Vo2Route
+import com.gowaist.app.ui.perf.ProfileDialog
 import com.gowaist.app.ui.theme.Gw
-import com.gowaist.core.mascot.MascotBrain
-import com.gowaist.core.mascot.MascotContext
-import com.gowaist.core.mascot.MascotLine
+import com.gowaist.app.ui.theme.NumberStyles
+import com.gowaist.core.Format
+import com.gowaist.core.goals.GoalProgress
 import com.gowaist.core.model.GoalStatus
-import com.gowaist.core.model.PlanDayStatus
-import com.gowaist.core.plan.PlanMatcher
+import com.gowaist.core.model.GoalType
 import com.gowaist.core.stats.Streaks
 import com.gowaist.core.stats.weekStart
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
-data class HomeState(
-    val loaded: Boolean = false,
-    val nickname: String = "",
-    val mascot: MascotLine = MascotLine.DEFAULT,
-    val today: LocalDate = LocalDate.now(),
-    val todayDays: List<PlanDayEntity> = emptyList(),
-    val weekDays: Map<LocalDate, List<PlanDayEntity>> = emptyMap(),
-    val activeDays: Set<LocalDate> = emptySet(),
-    val weekRunM: Double = 0.0,
-    val weekSessions: Int = 0,
-    val weekActive: Int = 0,
-    val streak: Int = 0,
-    val goals: List<GoalWithReward> = emptyList(),
-    val draft: SessionEntity? = null,
-    val templateNames: Map<Long, String> = emptyMap(),
-    val bodyEnabled: Boolean = true,
-)
-
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    settings: SettingsRepository,
-    private val plans: PlanRepository,
     runs: RunRepository,
-    private val workouts: WorkoutRepository,
-    goals: GoalRepository,
-    library: LibraryRepository,
-    records: RecordDao,
-    private val engine: SuggestionEngine,
+    perf: PerformanceRepository,
+    shoes: ShoeRepository,
+    private val goalRepo: GoalRepository,
+    private val settings: SettingsRepository,
 ) : ViewModel() {
-    private val today = LocalDate.now()
-    private val monday = today.weekStart()
+    val runs = runs.runs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val perf = perf.data.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val shoes = shoes.shoes.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val goals = goalRepo.goals.map { l -> l.filter { it.status == GoalStatus.ACTIVE }.take(3) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    var progress by mutableStateOf<Map<Long, GoalProgress>>(emptyMap())
+        private set
 
-    private val activity = combine(runs.runs, workouts.finishedSessions, plans.days(monday.minusWeeks(52), monday.plusDays(6)), records.observeAll()) { r, s, d, rec ->
-        Quad(r, s, d, rec)
-    }
+    fun refreshProgress() = viewModelScope.launch { progress = goalRepo.liveProgress() }
 
-    val state: StateFlow<HomeState> = combine(
-        settings.settings, activity, goals.goals, workouts.draft, library.templates,
-    ) { st, act, goalList, draft, templates ->
-        val (runList, sessions, planDays, recs) = act
-        val runDates = runList.map { it.localDate.toLocalDate() }
-        val sessionDates = sessions.map { it.localDate.toLocalDate() }
-        val active = (runDates + sessionDates).toSet()
-        val restDays = planDays.filter { it.status == PlanDayStatus.REST || it.type == com.gowaist.core.model.PlanDayType.REST }.map { it.date.toLocalDate() }.toSet()
-        val week = planDays.filter { !it.date.toLocalDate().isBefore(monday) }.groupBy { it.date.toLocalDate() }
-        val todayDays = week[today].orEmpty()
-        val weekWork = week.values.flatten().filter { it.type != com.gowaist.core.model.PlanDayType.REST }
-        val lastActivity = active.maxOrNull()
-        val lastPb = recs.maxOfOrNull { it.achievedAt }?.toLocalDateTime()?.toLocalDate()
-        val ctx = MascotContext(
-            hasAnyActivity = active.isNotEmpty(),
-            daysSinceLastActivity = lastActivity?.let { ChronoUnit.DAYS.between(it, today).toInt() },
-            pbWithinDays = lastPb?.let { ChronoUnit.DAYS.between(it, today).toInt() },
-            todayPlan = todayDays.firstOrNull()?.type,
-            todayStatus = todayDays.firstOrNull()?.status,
-            weekPlanned = weekWork.size,
-            weekDone = weekWork.count { PlanMatcher.isCompleted(it.status) },
-            streak = Streaks.current(active, restDays, today),
-            missedThisWeek = weekWork.count { it.status == PlanDayStatus.MISSED },
-        )
-        HomeState(
-            loaded = true,
-            nickname = st.nickname,
-            mascot = MascotBrain.line(ctx),
-            today = today,
-            todayDays = todayDays,
-            weekDays = week,
-            activeDays = active,
-            weekRunM = runList.filter { !it.localDate.toLocalDate().isBefore(monday) }.sumOf { it.distanceM },
-            weekSessions = sessions.count { !it.localDate.toLocalDate().isBefore(monday) },
-            weekActive = active.count { !it.isBefore(monday) && !it.isAfter(today) },
-            streak = ctx.streak,
-            goals = goalList.filter { it.goal.status == GoalStatus.ACTIVE }.take(3),
-            draft = draft,
-            templateNames = templates.associate { it.template.id to it.template.name },
-            bodyEnabled = st.bodyMetricsEnabled,
-        )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeState())
-
-    init {
-        // Days that passed since the last launch become "missed" / "done".
-        viewModelScope.launch { plans.syncStatuses() }
-    }
-
-    private val _suggestions = MutableStateFlow<List<SuggestionItem>>(emptyList())
-    val suggestions: StateFlow<List<SuggestionItem>> = _suggestions
-
-    fun refreshSuggestions() = viewModelScope.launch { _suggestions.value = runCatching { engine.open() }.getOrDefault(emptyList()) }
-
-    fun answer(item: SuggestionItem, action: Int) = viewModelScope.launch {
-        when (action) {
-            0 -> engine.accept(item)
-            1 -> engine.reject(item)
-            else -> engine.snooze(item)
-        }
-        refreshSuggestions()
-    }
-
-    fun startBodyweight(day: PlanDayEntity?, onStarted: (Long) -> Unit) = viewModelScope.launch {
-        onStarted(workouts.start(templateId = day?.templateId, planDayId = day?.id))
+    fun saveProfile(p: AppSettings) = viewModelScope.launch {
+        settings.update { it.copy(age = p.age, sex = p.sex, heightCm = p.heightCm, restHr = p.restHr, maxHr = p.maxHr) }
     }
 }
-
-private data class Quad<A, B, C, D>(val a: A, val b: B, val c: C, val d: D)
 
 @Composable
 fun HomeScreen(nav: NavHostController, vm: HomeViewModel = hiltViewModel()) {
-    val s by vm.state.collectAsStateWithLifecycle()
-    val suggestions by vm.suggestions.collectAsStateWithLifecycle()
-    LifecycleResumeEffect(Unit) {
-        vm.refreshSuggestions()
-        onPauseOrDispose { }
-    }
-    val lines = stringArrayResource(mascotArray(s.mascot))
-    val line = lines[(s.today.dayOfYear + s.mascot.ordinal) % lines.size]
-    val dayNames = stringArrayResource(R.array.weekdays_short).toList()
-    var menu by remember { mutableStateOf(false) }
+    val runs by vm.runs.collectAsStateWithLifecycle()
+    val perf by vm.perf.collectAsStateWithLifecycle()
+    val shoes by vm.shoes.collectAsStateWithLifecycle()
+    val goals by vm.goals.collectAsStateWithLifecycle()
+    val settings = LocalAppSettings.current
+    var editProfile by remember { mutableStateOf(false) }
+    val list = runs.orEmpty()
+    LaunchedEffect(list, goals) { vm.refreshProgress() }
+    val today = LocalDate.now()
+    val streak = remember(list) { Streaks.current(list.map { it.localDate.toLocalDate() }.toSet(), emptySet(), today) }
 
-    LazyColumn(
-        Modifier.fillMaxSize().statusBarsPadding(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    Column(
+        Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        if (s.nickname.isBlank()) stringResource(R.string.home_hello_anon) else stringResource(R.string.home_hello, s.nickname),
-                        style = MaterialTheme.typography.headlineMedium,
-                    )
-                    Text(Fmt.dateLong(s.today), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                IconButton(onClick = { menu = true }) { Icon(Icons.Rounded.MoreVert, stringResource(R.string.cd_menu)) }
-                DropdownMenu(menu, { menu = false }) {
-                    DropdownMenuItem({ Text(stringResource(R.string.home_menu_settings)) }, { menu = false; nav.navigate(SettingsRoute) }, leadingIcon = { Icon(Icons.Rounded.Settings, null) })
-                    if (s.bodyEnabled) DropdownMenuItem({ Text(stringResource(R.string.home_menu_body)) }, { menu = false; nav.navigate(BodyRoute) }, leadingIcon = { Icon(Icons.Rounded.MonitorWeight, null) })
-                    DropdownMenuItem({ Text(stringResource(R.string.home_menu_backup)) }, { menu = false; nav.navigate(SettingsRoute) }, leadingIcon = { Icon(Icons.Rounded.Backup, null) })
-                }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(Fmt.dateLong(today), style = MaterialTheme.typography.labelMedium, color = Gw.colors.muted)
+                Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
             }
+            if (streak > 0) Pill(stringResource(R.string.home_streak, streak), MaterialTheme.colorScheme.primary, icon = Icons.Rounded.LocalFireDepartment)
+            IconButton({ nav.navigate(SettingsRoute) }) { Icon(Icons.Rounded.Settings, stringResource(R.string.set_title)) }
         }
-        item { MascotSays(line, s.mascot.mood) }
 
-        s.draft?.let { draft ->
-            item {
-                GameCard(accent = Gw.colors.warning, onClick = { nav.navigate(SessionRoute(draft.id)) }) {
-                    Text(stringResource(R.string.home_resume_title), style = MaterialTheme.typography.titleMedium)
-                    Text(stringResource(R.string.home_resume_text, Fmt.time(draft.startAt.toLocalDateTime())), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(8.dp))
-                    GameButton(stringResource(R.string.action_continue), { nav.navigate(SessionRoute(draft.id)) }, color = Gw.colors.warning, icon = Icons.Rounded.PlayArrow, modifier = Modifier.fillMaxWidth())
+        if (!settings.profile.isComplete) {
+            GameCard(onClick = { editProfile = true }, modifier = Modifier.fillMaxWidth()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Rounded.Person, null, tint = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.width(10.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.home_profile_title), style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(R.string.home_profile_text), style = MaterialTheme.typography.bodySmall, color = Gw.colors.muted)
+                    }
                 }
             }
         }
 
-        item { SectionHeader(stringResource(R.string.home_today)) }
-        if (s.todayDays.isEmpty()) {
-            item {
-                GameCard {
-                    Text(stringResource(R.string.home_no_plan_today), style = MaterialTheme.typography.titleMedium)
-                    Text(stringResource(R.string.home_no_plan_text), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(10.dp))
-                    GameButton(stringResource(R.string.nav_plan), { nav.switchTab(PlanTabRoute) }, color = Gw.colors.plan, icon = Icons.Rounded.CalendarMonth, modifier = Modifier.fillMaxWidth())
+        val last = list.firstOrNull()
+        if (last != null) {
+            LastRunCard(last, shoes.firstOrNull { it.shoe.id == last.shoeId }?.shoe?.name) { nav.navigate(RunDetailRoute(last.id)) }
+        } else if (runs != null) {
+            GameCard(modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.home_first_title), style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(4.dp))
+                Text(stringResource(R.string.home_first_text), style = MaterialTheme.typography.bodyMedium, color = Gw.colors.muted)
+            }
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            val teal = Gw.colors.goal
+            GameCard(Modifier.weight(1f), fill = teal, onClick = { nav.navigate(Vo2Route) }) {
+                val fg = teal.contentColor()
+                Text(stringResource(R.string.hub_vo2_label), style = MaterialTheme.typography.labelMedium, color = fg)
+                Text(perf?.current?.let { Format.decimal(it, 1) } ?: "--", style = NumberStyles.big, color = fg, modifier = Modifier.testTag("home_vo2"))
+                Text(
+                    perf?.change(30)?.let { (if (it >= 0) "▲ +" else "▼ ") + stringResource(R.string.vo2_change, Format.decimal(it, 1)) } ?: stringResource(R.string.home_vo2_none),
+                    style = MaterialTheme.typography.labelSmall, color = fg, maxLines = 2,
+                )
+                Spacer(Modifier.height(6.dp))
+                val trend = remember(perf) { perf?.daily?.takeLast(30)?.map { it.trend.toFloat() }.orEmpty() }
+                Sparkline(trend, fg)
+            }
+            val ws = today.weekStart()
+            val week = remember(list) {
+                (0..6).map { d -> list.filter { it.localDate.toLocalDate() == ws.plusDays(d.toLong()) }.sumOf { it.distanceM } }
+            }
+            GameCard(Modifier.weight(1f)) {
+                Text(stringResource(R.string.home_this_week), style = MaterialTheme.typography.labelMedium, color = Gw.colors.muted)
+                Text(Fmt.distanceValue(week.sum(), 1), style = NumberStyles.big)
+                Text(
+                    LocalAppSettings.current.distanceUnit.label() + " · " + stringResource(R.string.run_count, list.count { !it.localDate.toLocalDate().isBefore(ws) }),
+                    style = MaterialTheme.typography.labelSmall, color = Gw.colors.muted,
+                )
+                Spacer(Modifier.height(6.dp))
+                WeekBars(week, ChronoUnit.DAYS.between(ws, today).toInt(), Gw.colors.ink, MaterialTheme.colorScheme.primary)
+            }
+        }
+
+        if (goals.isNotEmpty()) {
+            GameCard(onClick = { nav.navigate(GoalsRoute) }, modifier = Modifier.fillMaxWidth()) {
+                goals.forEachIndexed { i, g ->
+                    if (i > 0) Spacer(Modifier.height(10.dp))
+                    GoalLine(g, vm.progress[g.id])
                 }
             }
         } else {
-            items(s.todayDays, key = { "day" + it.id }) { day ->
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PlanDayRow(day, day.templateId?.let { s.templateNames[it] }, isToday = true)
-                    val pending = day.status == PlanDayStatus.PENDING || day.status == PlanDayStatus.PARTIAL
-                    when {
-                        day.type == com.gowaist.core.model.PlanDayType.REST -> Text(stringResource(R.string.home_rest_today), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        day.type.isRun && pending -> Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            GameButton(stringResource(R.string.home_import_run), { nav.navigate(RunImportRoute) }, color = Gw.colors.run, icon = Icons.Rounded.PhotoLibrary, modifier = Modifier.weight(1f))
-                            GameButton(stringResource(R.string.home_manual_run), { nav.navigate(RunEditRoute()) }, color = Gw.colors.run.copy(alpha = 0.85f), icon = Icons.Rounded.EditNote, modifier = Modifier.weight(1f))
-                        }
-                        day.type.isBodyweight && pending -> GameButton(
-                            stringResource(R.string.action_start_now), { vm.startBodyweight(day) { nav.navigate(SessionRoute(it)) } },
-                            color = Gw.colors.train, icon = Icons.Rounded.PlayArrow, big = true, modifier = Modifier.fillMaxWidth(),
-                        )
-                        else -> Unit
-                    }
+            TextButton({ nav.navigate(GoalsRoute) }) { Text(stringResource(R.string.home_set_goal)) }
+        }
+
+        shoes.firstOrNull { it.shoe.isMain && !it.shoe.retired }?.let { main ->
+            GameCard(onClick = { nav.switchTab(ShoesRoute) }, modifier = Modifier.fillMaxWidth()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(ShoeIcon, null, tint = MaterialTheme.colorScheme.onSurface)
+                    Spacer(Modifier.width(8.dp))
+                    Text(main.shoe.name, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+                    Text(Fmt.distance(main.stats.distanceM, 0), style = MaterialTheme.typography.labelLarge)
                 }
-            }
-        }
-
-        item {
-            SectionHeader(stringResource(R.string.home_this_week))
-            WeekStrip(s.today.weekStart(), s.weekDays, s.activeDays, s.today, dayNames)
-        }
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                StatTile(stringResource(R.string.home_run_distance), Fmt.distanceValue(s.weekRunM, 1), Modifier.weight(1f), unit = com.gowaist.app.ui.LocalAppSettings.current.distanceUnit.let { stringResource(Fmt.unitLabelRes(it)) }, icon = Icons.AutoMirrored.Rounded.DirectionsRun, color = Gw.colors.run)
-                StatTile(stringResource(R.string.home_bw_sessions), "${s.weekSessions}", Modifier.weight(1f), unit = stringResource(R.string.unit_sessions), icon = Icons.Rounded.FitnessCenter, color = Gw.colors.train)
-            }
-            Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                StatTile(stringResource(R.string.home_active_days), stringResource(R.string.home_days_of, s.weekActive, 7), Modifier.weight(1f), icon = Icons.Rounded.CalendarMonth, color = Gw.colors.plan)
-                StatTile(stringResource(R.string.home_streak), "${s.streak}", Modifier.weight(1f), unit = stringResource(R.string.unit_days), icon = Icons.Rounded.LocalFireDepartment, color = Gw.colors.warning)
-            }
-        }
-
-        if (s.goals.isNotEmpty()) {
-            item { SectionHeader(stringResource(R.string.home_goals)) { androidx.compose.material3.TextButton({ nav.switchTab(GoalsTabRoute) }) { Text(stringResource(R.string.action_see_all)) } } }
-            items(s.goals, key = { "goal" + it.goal.id }) { g ->
-                GameCard(accent = Gw.colors.goal, onClick = { nav.switchTab(GoalsTabRoute) }) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(g.goal.title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                        Text(stringResource(R.string.home_goal_progress, (g.goal.progress * 100).toInt()), style = MaterialTheme.typography.titleMedium, color = Gw.colors.goal)
-                    }
+                main.shoe.durabilityPct?.let {
                     Spacer(Modifier.height(8.dp))
-                    GameProgressBar(g.goal.progress.toFloat(), color = Gw.colors.goal)
-                    g.reward?.let { Text("🎁 " + it.text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp)) }
+                    HpBar(it, height = 12.dp)
                 }
             }
         }
 
-        if (suggestions.isNotEmpty()) {
-            item { SectionHeader(stringResource(R.string.sug_section)) }
-            items(suggestions.take(3), key = { it.key }) { item ->
-                SuggestionCard(item, { vm.answer(item, 0) }, { vm.answer(item, 1) }, { vm.answer(item, 2) })
-            }
-        }
+        GameButton(
+            stringResource(R.string.home_import), { nav.navigate(RunImportRoute) }, icon = Icons.Rounded.Download, big = true,
+            modifier = Modifier.fillMaxWidth().testTag("home_import"),
+        )
+        TextButton({ nav.navigate(RunEditRoute()) }, Modifier.fillMaxWidth().testTag("home_manual")) { Text(stringResource(R.string.run_manual)) }
+    }
+    if (editProfile) {
+        ProfileDialog(settings, onSave = { vm.saveProfile(it); editProfile = false }, onDismiss = { editProfile = false })
+    }
+}
 
-        item {
-            SectionHeader(stringResource(R.string.home_quick))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                GameButton(stringResource(R.string.home_import_run), { nav.navigate(RunImportRoute) }, color = Gw.colors.run, icon = Icons.Rounded.PhotoLibrary, modifier = Modifier.weight(1f))
-                GameButton(stringResource(R.string.home_start_bw), { vm.startBodyweight(null) { nav.navigate(SessionRoute(it)) } }, color = Gw.colors.train, icon = Icons.Rounded.FitnessCenter, modifier = Modifier.weight(1f))
-            }
-            Spacer(Modifier.width(1.dp))
+@Composable
+private fun LastRunCard(r: RunEntity, shoe: String?, onClick: () -> Unit) {
+    GameCard(onClick = onClick, modifier = Modifier.fillMaxWidth().testTag("home_last_run")) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.home_last_run) + " · " + Fmt.dateShort(r.localDate.toLocalDate()) + " " + Fmt.time(r.startAt.toLocalDateTime()),
+                style = MaterialTheme.typography.labelMedium, color = Gw.colors.muted, modifier = Modifier.weight(1f),
+            )
+            if (shoe != null) Pill(shoe, Gw.colors.ink, filled = true)
+        }
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(Fmt.distanceValue(r.distanceM), style = NumberStyles.huge)
+            Text(" " + LocalAppSettings.current.distanceUnit.label(), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            StatBlock(stringResource(R.string.run_duration), if (r.durationSec > 0) Fmt.duration(r.durationSec) else "-", Modifier.weight(1f))
+            StatBlock(stringResource(R.string.run_pace), Fmt.paceValue(r.avgPaceSecPerKm), Modifier.weight(1f))
+            StatBlock(stringResource(R.string.run_avg_hr), r.avgHr?.toString() ?: "-", Modifier.weight(1f), unit = if (r.avgHr != null) "bpm" else null)
         }
     }
 }
 
-fun mascotArray(line: MascotLine): Int = when (line) {
-    MascotLine.WELCOME -> R.array.mascot_welcome
-    MascotLine.NEW_PB -> R.array.mascot_new_pb
-    MascotLine.TODAY_DONE -> R.array.mascot_today_done
-    MascotLine.WEEK_COMPLETE -> R.array.mascot_week_complete
-    MascotLine.STREAK -> R.array.mascot_streak
-    MascotLine.TODAY_RUN -> R.array.mascot_today_run
-    MascotLine.TODAY_TRAIN -> R.array.mascot_today_train
-    MascotLine.REST_DAY -> R.array.mascot_rest_day
-    MascotLine.MISSED_SOME -> R.array.mascot_missed_some
-    MascotLine.LONG_BREAK -> R.array.mascot_long_break
-    MascotLine.DEFAULT -> R.array.mascot_default
+@Composable
+private fun GoalLine(g: GoalEntity, p: GoalProgress?) {
+    val frac = (p?.fraction ?: g.progress).toFloat()
+    Row {
+        Text(g.title.ifBlank { stringResource(g.type.labelRes()) }, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+        Text(goalValue(g, p), style = MaterialTheme.typography.labelLarge)
+    }
+    Spacer(Modifier.height(4.dp))
+    GameProgressBar(frac, color = if (frac >= 1f) Gw.colors.goal else MaterialTheme.colorScheme.primary)
+}
+
+/** "current / target" text in the user's units. */
+@Composable
+fun goalValue(g: GoalEntity, p: GoalProgress?): String {
+    val cur = p?.current
+    return when (g.type) {
+        GoalType.RUN_DISTANCE -> Fmt.distanceValue(cur ?: 0.0, 1) + " / " + Fmt.distance(g.target, 0)
+        GoalType.RUN_COUNT, GoalType.STREAK_DAYS -> "${(cur ?: 0.0).toInt()} / ${g.target.toInt()}"
+        GoalType.RUN_5K_TIME -> (cur?.let { Format.duration(it.toLong()) } ?: "-") + " / " + Format.duration(g.target.toLong())
+        GoalType.BODY_WEIGHT -> (cur?.let { Fmt.weight(it) } ?: "-") + " → " + Fmt.weight(g.target)
+        GoalType.WAIST -> (cur?.let { Fmt.length(it) } ?: "-") + " → " + Fmt.length(g.target)
+        else -> ""
+    }
 }

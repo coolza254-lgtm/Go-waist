@@ -42,7 +42,6 @@ import com.gowaist.app.ui.components.BarChart
 import com.gowaist.app.ui.components.ChartPoint
 import com.gowaist.app.ui.components.ChartSeries
 import com.gowaist.app.ui.components.EmptyState
-import com.gowaist.app.ui.components.GameBanner
 import com.gowaist.app.ui.components.GameCard
 import com.gowaist.app.ui.components.IconBlob
 import com.gowaist.app.ui.components.LineChart
@@ -56,7 +55,6 @@ import com.gowaist.app.ui.theme.Palette
 import com.gowaist.app.ui.theme.shade
 import com.gowaist.core.Format
 import com.gowaist.core.Units
-import com.gowaist.core.mascot.MascotMood
 import com.gowaist.core.perf.RunPaces
 import com.gowaist.core.perf.RunType
 import com.gowaist.core.perf.TrainingLoad
@@ -68,7 +66,7 @@ fun PerformanceScreen(nav: NavHostController, vm: PerfViewModel = hiltViewModel(
         val d = data
         when {
             d == null -> Box(Modifier.padding(pad).fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-            d.runsById.isEmpty() && d.load.all { it.load == 0.0 } -> EmptyState(stringResource(R.string.perf_title), stringResource(R.string.perf_no_data), Modifier.padding(pad), mood = MascotMood.CALM)
+            d.runsById.isEmpty() && d.load.all { it.load == 0.0 } -> EmptyState(stringResource(R.string.perf_title), stringResource(R.string.perf_no_data), Modifier.padding(pad))
             else -> PerfContent(d, Modifier.padding(pad))
         }
     }
@@ -81,7 +79,7 @@ private fun PerfContent(d: PerformanceData, modifier: Modifier) {
         val last = d.load.lastOrNull()
         if (last != null) {
             val state = TrainingLoad.state(last)
-            GameBanner(listOf(state.color(), state.color().shade(0.7f)), seed = 6) {
+            GameCard(Modifier.fillMaxWidth(), fill = state.color()) {
                 Text(state.label(), color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black, modifier = Modifier.testTag("perf_state"))
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

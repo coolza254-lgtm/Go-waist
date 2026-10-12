@@ -21,8 +21,6 @@ import androidx.lifecycle.viewModelScope
 import com.gowaist.app.data.settings.AppSettings
 import com.gowaist.app.data.settings.SettingsRepository
 import com.gowaist.app.ui.AppNavigation
-import com.gowaist.app.ui.CelebrationHost
-import com.gowaist.app.ui.onboarding.OnboardingScreen
 import com.gowaist.app.ui.theme.GoWaistTheme
 import com.gowaist.app.ui.theme.isAppInDarkTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -53,12 +51,7 @@ class MainActivity : ComponentActivity() {
             GoWaistTheme(dark = dark) {
                 SystemBars(dark)
                 Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-                    if (!s.onboardingDone) {
-                        OnboardingScreen()
-                    } else {
-                        AppNavigation(s)
-                    }
-                    CelebrationHost()
+                    AppNavigation(s)
                 }
             }
         }

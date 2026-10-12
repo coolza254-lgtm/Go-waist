@@ -31,15 +31,10 @@ object AppModule {
             .build()
 
     @Provides fun runDao(db: GoWaistDatabase) = db.runDao()
-    @Provides fun exerciseDao(db: GoWaistDatabase) = db.exerciseDao()
-    @Provides fun chainDao(db: GoWaistDatabase) = db.chainDao()
-    @Provides fun templateDao(db: GoWaistDatabase) = db.templateDao()
-    @Provides fun sessionDao(db: GoWaistDatabase) = db.sessionDao()
-    @Provides fun planDao(db: GoWaistDatabase) = db.planDao()
     @Provides fun goalDao(db: GoWaistDatabase) = db.goalDao()
     @Provides fun bodyDao(db: GoWaistDatabase) = db.bodyDao()
     @Provides fun recordDao(db: GoWaistDatabase) = db.recordDao()
-    @Provides fun suggestionDao(db: GoWaistDatabase) = db.suggestionDao()
+    @Provides fun shoeDao(db: GoWaistDatabase) = db.shoeDao()
 
     @Provides
     @Singleton

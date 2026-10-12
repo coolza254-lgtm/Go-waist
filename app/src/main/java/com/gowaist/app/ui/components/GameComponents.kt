@@ -1,9 +1,7 @@
 package com.gowaist.app.ui.components
 
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -28,8 +26,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
@@ -37,7 +33,6 @@ import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -46,11 +41,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -58,23 +52,33 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.gowaist.app.R
 import com.gowaist.app.ui.theme.Gw
 import com.gowaist.app.ui.theme.NumberStyles
-import com.gowaist.app.ui.theme.shade
 
-fun Color.contentColor(): Color = if (luminance() > 0.55f) Color(0xFF2B2140) else Color.White
+/** Readable text colour on top of [this] fill. */
+fun Color.contentColor(): Color = if (luminance() > 0.5f) Color(0xFF2A2420) else Color(0xFFFFF9EE)
 
 /**
- * Chunky "game" button: a coloured top face over a darker base that it sinks into when pressed.
+ * The app's signature surface: a fill with a thin ink outline and a small solid shadow offset to
+ * the bottom right, like a flat 2D game panel. [shadow] 0 gives a flat outlined panel.
  */
+fun Modifier.panel(fill: Color, ink: Color, radius: Dp = 12.dp, shadow: Dp = 3.dp, border: Dp = 1.5.dp, space: Dp = shadow): Modifier = this
+    .padding(end = space, bottom = space)
+    .drawBehind {
+        if (shadow > 0.dp) {
+            val r = radius.toPx()
+            drawRoundRect(ink, topLeft = Offset(shadow.toPx(), shadow.toPx()), size = Size(size.width, size.height), cornerRadius = CornerRadius(r, r))
+        }
+    }
+    .clip(RoundedCornerShape(radius))
+    .background(fill)
+    .border(BorderStroke(border, ink), RoundedCornerShape(radius))
+
 @Composable
 fun GameButton(
     text: String,
@@ -84,126 +88,108 @@ fun GameButton(
     icon: ImageVector? = null,
     enabled: Boolean = true,
     big: Boolean = false,
-    haptic: Boolean = true,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
-    val depth = if (big) 6.dp else 5.dp
-    val offset by animateDpAsState(if (pressed) depth else 0.dp, spring(stiffness = Spring.StiffnessHigh), label = "press")
-    val scale by animateFloatAsState(if (pressed) 0.98f else 1f, spring(dampingRatio = 0.4f), label = "bounce")
     val haptics = LocalHapticFeedback.current
-    val face = if (enabled) color else Gw.colors.muted.copy(alpha = 0.5f)
-    val shape = RoundedCornerShape(if (big) 24.dp else 18.dp)
-    val height = if (big) Gw.space.bigTouch else Gw.space.touch
+    val shadow by animateDpAsState(if (pressed || !enabled) 0.dp else 3.dp, tween(60), label = "press")
+    val face = if (enabled) color else Gw.colors.track
+    val fg = if (enabled) face.contentColor() else Gw.colors.muted
     Box(
-        modifier = modifier
-            .scale(scale)
-            .heightIn(min = height + depth)
-            .clickable(
-                interactionSource = interaction,
-                indication = null,
-                enabled = enabled,
-                role = Role.Button,
-            ) {
-                if (haptic) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        modifier
+            .padding(end = 3.dp, bottom = 3.dp)
+            .heightIn(min = if (big) Gw.space.bigTouch else Gw.space.touch)
+            .offset(x = 3.dp - shadow, y = 3.dp - shadow)
+            .panel(face, Gw.colors.ink, radius = 12.dp, shadow = shadow, space = 0.dp)
+            .clickable(interaction, indication = null, enabled = enabled, role = Role.Button) {
+                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 onClick()
-            },
-    ) {
-        Box(
-            Modifier
-                .matchParentSize()
-                .padding(top = depth)
-                .clip(shape)
-                .background(face.shade(0.72f)),
-        )
-        Row(
-            modifier = Modifier
-                .offset(y = offset)
-                .fillMaxWidth()
-                .heightIn(min = height)
-                .clip(shape)
-                .background(Brush.verticalGradient(listOf(face.copy(alpha = 1f), face.shade(0.93f))))
-                .padding(horizontal = 18.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            val fg = face.contentColor()
-            if (icon != null) {
-                Icon(icon, contentDescription = null, tint = fg, modifier = Modifier.size(if (big) 30.dp else 24.dp))
-                Spacer(Modifier.width(10.dp))
             }
-            Text(
-                text,
-                color = fg,
-                style = if (big) MaterialTheme.typography.titleLarge else MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.ExtraBold,
-                maxLines = 2,
-                textAlign = TextAlign.Center,
-            )
+            .padding(horizontal = 18.dp, vertical = 12.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (icon != null) {
+                Icon(icon, null, tint = fg, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+            }
+            Text(text, color = fg, style = if (big) MaterialTheme.typography.titleMedium else MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
         }
     }
 }
 
-/** Round icon-only game button (e.g. +/− steppers). */
 @Composable
 fun RoundGameButton(
     icon: ImageVector,
     contentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.primary,
-    size: Dp = 64.dp,
+    color: Color = Gw.colors.card,
+    size: Dp = 52.dp,
     enabled: Boolean = true,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
-    val offset by animateDpAsState(if (pressed) 4.dp else 0.dp, label = "press")
-    val haptics = LocalHapticFeedback.current
-    val face = if (enabled) color else Gw.colors.muted.copy(alpha = 0.5f)
+    val shadow by animateDpAsState(if (pressed) 0.dp else 2.dp, tween(60), label = "press")
     Box(
         modifier
-            .size(size + 4.dp)
-            .semantics { this.contentDescription = contentDescription }
-            .clickable(interactionSource = interaction, indication = null, enabled = enabled, role = Role.Button) {
-                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                onClick()
-            },
+            .padding(end = 2.dp, bottom = 2.dp)
+            .size(size)
+            .offset(x = 2.dp - shadow, y = 2.dp - shadow)
+            .panel(if (enabled) color else Gw.colors.track, Gw.colors.ink, radius = 10.dp, shadow = shadow, space = 0.dp)
+            .clickable(interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
     ) {
-        Box(Modifier.size(size).offset(y = 4.dp).clip(CircleShape).background(face.shade(0.72f)))
-        Box(
-            Modifier.size(size).offset(y = offset).clip(CircleShape).background(face),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(icon, contentDescription = null, tint = face.contentColor(), modifier = Modifier.size(size * 0.5f))
-        }
+        Icon(icon, contentDescription, tint = if (enabled) color.contentColor() else Gw.colors.muted, modifier = Modifier.size(size * 0.45f))
     }
 }
 
 @Composable
 fun GameCard(
     modifier: Modifier = Modifier,
-    accent: Color? = null,
+    fill: Color? = null,
     onClick: (() -> Unit)? = null,
-    contentPadding: PaddingValues = PaddingValues(16.dp),
+    contentPadding: PaddingValues = PaddingValues(14.dp),
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val shape = RoundedCornerShape(Gw.radii.m)
-    val base = modifier
-        .clip(shape)
-        .background(Gw.colors.card)
-        .border(BorderStroke(2.dp, accent?.copy(alpha = 0.35f) ?: Gw.colors.cardBorder), shape)
+    val base = modifier.panel(fill ?: Gw.colors.card, Gw.colors.ink)
     val clickable = if (onClick != null) base.clickable(onClick = onClick) else base
     Column(clickable.padding(contentPadding), content = content)
 }
 
 @Composable
 fun SectionHeader(title: String, modifier: Modifier = Modifier, action: (@Composable RowScope.() -> Unit)? = null) {
-    Row(modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+    Row(modifier.fillMaxWidth().padding(top = 8.dp, bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
         action?.invoke(this)
     }
 }
 
+/** A labelled number with a dashed-rule look: value on top, small caption under it. */
+@Composable
+fun StatBlock(label: String, value: String, modifier: Modifier = Modifier, unit: String? = null, valueColor: Color = MaterialTheme.colorScheme.onSurface) {
+    val line = Gw.colors.line
+    Column(
+        modifier
+            .drawBehind {
+                val dash = 6.dp.toPx()
+                var x = 0f
+                while (x < size.width) {
+                    drawLine(line, Offset(x, 0f), Offset((x + dash).coerceAtMost(size.width), 0f), strokeWidth = 1.5.dp.toPx())
+                    x += dash * 1.8f
+                }
+            }
+            .padding(top = 8.dp),
+    ) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(value, style = NumberStyles.medium, color = valueColor, maxLines = 1)
+            if (unit != null) Text(" $unit", style = MaterialTheme.typography.labelMedium, color = Gw.colors.muted, modifier = Modifier.padding(bottom = 2.dp))
+        }
+        Text(label, style = MaterialTheme.typography.labelMedium, color = Gw.colors.muted, maxLines = 1)
+    }
+}
+
+/** Compact outlined tile with a big number. */
 @Composable
 fun StatTile(
     label: String,
@@ -211,59 +197,51 @@ fun StatTile(
     modifier: Modifier = Modifier,
     unit: String? = null,
     icon: ImageVector? = null,
-    color: Color = MaterialTheme.colorScheme.primary,
+    color: Color = MaterialTheme.colorScheme.onSurface,
 ) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(Gw.radii.m),
-        color = color.copy(alpha = 0.12f),
-        border = BorderStroke(2.dp, color.copy(alpha = 0.25f)),
-    ) {
-        Column(Modifier.padding(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (icon != null) {
-                    Box(Modifier.size(28.dp).clip(CircleShape).background(color), contentAlignment = Alignment.Center) {
-                        Icon(icon, null, tint = color.contentColor(), modifier = Modifier.size(18.dp))
-                    }
-                    Spacer(Modifier.width(8.dp))
-                }
-                Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    Column(modifier.panel(Gw.colors.card, Gw.colors.ink, radius = 10.dp, shadow = 0.dp, border = 1.dp).padding(12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (icon != null) {
+                Icon(icon, null, tint = color, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
             }
-            Spacer(Modifier.height(6.dp))
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text(value, style = NumberStyles.medium, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
-                if (unit != null) {
-                    Spacer(Modifier.width(4.dp))
-                    Text(unit, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 3.dp))
-                }
-            }
+            Text(label, style = MaterialTheme.typography.labelMedium, color = Gw.colors.muted, maxLines = 1)
+        }
+        Spacer(Modifier.height(2.dp))
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(value, style = NumberStyles.medium, color = color, maxLines = 1)
+            if (unit != null) Text(" $unit", style = MaterialTheme.typography.labelMedium, color = Gw.colors.muted, modifier = Modifier.padding(bottom = 2.dp))
         }
     }
 }
 
-/** Rounded progress bar with an animated fill and a shine strip, like a game XP bar. */
+/** Outlined progress bar. */
 @Composable
-fun GameProgressBar(
-    progress: Float,
-    modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.primary,
-    height: Dp = 18.dp,
-) {
-    val p by animateFloatAsState(progress.coerceIn(0f, 1f), tween(900), label = "progress")
+fun GameProgressBar(progress: Float, modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.primary, height: Dp = 14.dp) {
+    val p by animateFloatAsState(progress.coerceIn(0f, 1f), tween(700), label = "progress")
+    val ink = Gw.colors.ink
     val track = Gw.colors.track
     Canvas(modifier.fillMaxWidth().height(height)) {
-        val r = CornerRadius(size.height / 2, size.height / 2)
+        val r = CornerRadius(4.dp.toPx())
+        val b = 1.5.dp.toPx()
         drawRoundRect(track, cornerRadius = r)
-        if (p > 0f) {
-            val w = (size.width * p).coerceAtLeast(size.height)
-            drawRoundRect(color, size = Size(w, size.height), cornerRadius = r)
-            drawRoundRect(
-                Color.White.copy(alpha = 0.35f),
-                topLeft = Offset(size.height / 3, size.height * 0.18f),
-                size = Size((w - size.height * 2 / 3).coerceAtLeast(0f), size.height * 0.22f),
-                cornerRadius = r,
-            )
-        }
+        if (p > 0f) drawRoundRect(color, size = Size(size.width * p, size.height), cornerRadius = r)
+        drawRoundRect(ink, topLeft = Offset(b / 2, b / 2), size = Size(size.width - b, size.height - b), cornerRadius = r, style = androidx.compose.ui.graphics.drawscope.Stroke(b))
+    }
+}
+
+/** Segmented "HP" bar for shoe durability: [segments] blocks, filled by [percent]. */
+@Composable
+fun HpBar(percent: Int, modifier: Modifier = Modifier, color: Color = Gw.colors.goal, segments: Int = 10, height: Dp = 16.dp) {
+    val ink = Gw.colors.ink
+    val filled = ((percent.coerceIn(0, 100) / 100f) * segments + 0.001f).toInt()
+    val low = percent < 25
+    val fill = if (low) Gw.colors.danger else color
+    Row(
+        modifier.fillMaxWidth().height(height).border(1.5.dp, ink, RoundedCornerShape(4.dp)).padding(2.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        repeat(segments) { i -> Box(Modifier.weight(1f).height(height).background(if (i < filled) fill else Color.Transparent)) }
     }
 }
 
@@ -271,31 +249,28 @@ fun GameProgressBar(
 fun Pill(text: String, color: Color, modifier: Modifier = Modifier, icon: ImageVector? = null, filled: Boolean = false) {
     Row(
         modifier
-            .clip(RoundedCornerShape(50))
-            .background(if (filled) color else color.copy(alpha = 0.15f))
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .clip(RoundedCornerShape(5.dp))
+            .background(if (filled) color else color.copy(alpha = 0.14f))
+            .padding(horizontal = 8.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val fg = if (filled) color.contentColor() else color.shade(0.85f).let { if (MaterialTheme.colorScheme.background.luminance() < 0.3f) color else it }
+        val fg = if (filled) color.contentColor() else MaterialTheme.colorScheme.onSurface
         if (icon != null) {
-            Icon(icon, null, tint = fg, modifier = Modifier.size(14.dp))
+            Icon(icon, null, tint = if (filled) fg else color, modifier = Modifier.size(14.dp))
             Spacer(Modifier.width(4.dp))
         }
-        Text(text, style = MaterialTheme.typography.labelMedium, color = fg, fontWeight = FontWeight.Bold, maxLines = 1)
+        Text(text, style = MaterialTheme.typography.labelMedium, color = fg, fontWeight = FontWeight.SemiBold, maxLines = 1)
     }
 }
 
 @Composable
 fun IconBlob(icon: ImageVector, color: Color, modifier: Modifier = Modifier, size: Dp = 44.dp) {
-    Box(
-        modifier.size(size).clip(RoundedCornerShape(size * 0.32f)).background(color),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(icon, null, tint = color.contentColor(), modifier = Modifier.size(size * 0.56f))
+    Box(modifier.size(size).panel(color.copy(alpha = 0.16f), Gw.colors.ink, radius = 8.dp, shadow = 0.dp, border = 1.dp), contentAlignment = Alignment.Center) {
+        Icon(icon, null, tint = color, modifier = Modifier.size(size * 0.52f))
     }
 }
 
-/** Big −/value/+ control used for reps, seconds and weight. */
+/** −/value/+ control. */
 @Composable
 fun NumberStepper(
     value: String,
@@ -307,15 +282,15 @@ fun NumberStepper(
     onValueClick: (() -> Unit)? = null,
 ) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
-        RoundGameButton(Icons.Rounded.Remove, stringResource(R.string.cd_decrease, label), onMinus, color = color.copy(alpha = 0.9f), size = 60.dp)
+        RoundGameButton(Icons.Rounded.Remove, stringResource(R.string.cd_decrease, label), onMinus)
         Column(
             Modifier.weight(1f).let { if (onValueClick != null) it.clickable(onClick = onValueClick) else it },
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(value, style = NumberStyles.big, textAlign = TextAlign.Center, maxLines = 1)
-            Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(label, style = MaterialTheme.typography.labelMedium, color = Gw.colors.muted)
         }
-        RoundGameButton(Icons.Rounded.Add, stringResource(R.string.cd_increase, label), onPlus, color = color, size = 60.dp)
+        RoundGameButton(Icons.Rounded.Add, stringResource(R.string.cd_increase, label), onPlus, color = color)
     }
 }
 
@@ -324,19 +299,21 @@ fun EmptyState(
     title: String,
     message: String,
     modifier: Modifier = Modifier,
-    mood: com.gowaist.core.mascot.MascotMood = com.gowaist.core.mascot.MascotMood.HAPPY,
+    icon: ImageVector? = null,
     actionText: String? = null,
     onAction: (() -> Unit)? = null,
 ) {
     Column(modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Mascot(mood = mood, modifier = Modifier.size(132.dp))
-        Spacer(Modifier.height(12.dp))
+        if (icon != null) {
+            IconBlob(icon, MaterialTheme.colorScheme.primary, size = 64.dp)
+            Spacer(Modifier.height(14.dp))
+        }
         Text(title, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
         Spacer(Modifier.height(6.dp))
-        Text(message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+        Text(message, style = MaterialTheme.typography.bodyMedium, color = Gw.colors.muted, textAlign = TextAlign.Center)
         if (actionText != null && onAction != null) {
-            Spacer(Modifier.height(16.dp))
-            GameButton(actionText, onAction, modifier = Modifier.widthIn(min = 200.dp))
+            Spacer(Modifier.height(18.dp))
+            GameButton(actionText, onAction)
         }
     }
 }
@@ -363,7 +340,6 @@ fun ConfirmDialog(
     )
 }
 
-/** Box filling the screen width with standard horizontal padding. */
 @Composable
 fun ScreenPadding(content: @Composable BoxScope.() -> Unit) {
     Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp), content = content)

@@ -48,6 +48,14 @@ import androidx.navigation.NavHostController
 import com.gowaist.app.R
 import com.gowaist.app.data.db.RunEntity
 import com.gowaist.app.data.repo.RunRepository
+import com.gowaist.app.data.repo.ShoeRepository
+import com.gowaist.app.ui.components.ShoeIcon
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material3.Icon
 import com.gowaist.app.data.toLocalDate
 import com.gowaist.app.data.toLocalDateTime
 import com.gowaist.app.domain.ActivityCoordinator
@@ -71,13 +79,15 @@ import javax.inject.Inject
 @HiltViewModel
 class RunDetailViewModel @Inject constructor(
     private val runs: RunRepository,
+    shoes: ShoeRepository,
     private val coordinator: ActivityCoordinator,
 ) : ViewModel() {
+    val shoes = shoes.shoes.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     fun run(id: Long): Flow<RunEntity?> = runs.observe(id)
 
     fun delete(id: Long, after: () -> Unit) = viewModelScope.launch {
         runs.delete(id)
-        coordinator.afterChange(celebrate = false)
+        coordinator.afterChange()
         after()
     }
 }
@@ -86,6 +96,7 @@ class RunDetailViewModel @Inject constructor(
 fun RunDetailScreen(nav: NavHostController, id: Long, vm: RunDetailViewModel = hiltViewModel()) {
     val flow = remember(id) { vm.run(id) }
     val run by flow.collectAsStateWithLifecycle(null)
+    val shoes by vm.shoes.collectAsStateWithLifecycle()
     var confirm by remember { mutableStateOf(false) }
     var zoom by remember { mutableStateOf(false) }
     val r = run
@@ -102,16 +113,26 @@ fun RunDetailScreen(nav: NavHostController, id: Long, vm: RunDetailViewModel = h
         Column(Modifier.padding(pad).fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(Fmt.dateLong(r.localDate.toLocalDate()) + " · " + Fmt.time(r.startAt.toLocalDateTime()), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(verticalAlignment = Alignment.Bottom) {
-                Text(Fmt.distanceValue(r.distanceM), style = com.gowaist.app.ui.theme.NumberStyles.huge, color = Gw.colors.run)
+                Text(Fmt.distanceValue(r.distanceM), style = com.gowaist.app.ui.theme.NumberStyles.huge)
                 Text(" " + unit.label(), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(bottom = 10.dp))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                StatTile(stringResource(R.string.run_duration), Fmt.duration(r.durationSec), Modifier.weight(1f), icon = Icons.Rounded.Timer, color = Gw.colors.train)
+                StatTile(stringResource(R.string.run_duration), if (r.durationSec > 0) Fmt.duration(r.durationSec) else "-", Modifier.weight(1f), icon = Icons.Rounded.Timer, color = Gw.colors.goal)
                 StatTile(stringResource(R.string.run_pace), Fmt.paceValue(r.avgPaceSecPerKm ?: Pace.secPerKm(r.distanceM, r.durationSec)), Modifier.weight(1f), icon = Icons.Rounded.Speed, color = Gw.colors.goal)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 StatTile(stringResource(R.string.run_calories), r.calories?.toString() ?: "-", Modifier.weight(1f), unit = stringResource(R.string.unit_kcal), icon = Icons.Rounded.LocalFireDepartment, color = Gw.colors.warning)
                 StatTile(stringResource(R.string.run_avg_hr), r.avgHr?.toString() ?: "-", Modifier.weight(1f), unit = stringResource(R.string.unit_bpm), icon = Icons.Rounded.Favorite, color = Gw.colors.danger)
+            }
+            shoes.firstOrNull { it.shoe.id == r.shoeId }?.let { sh ->
+                GameCard(Modifier.fillMaxWidth()) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(ShoeIcon, null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(sh.shoe.name, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.shoe_total_on_shoe, Fmt.distance(sh.stats.distanceM, 0)), style = MaterialTheme.typography.labelMedium, color = Gw.colors.muted)
+                    }
+                }
             }
             if (r.tags.isNotEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { r.tags.forEach { Pill(it, Gw.colors.run) } }
             if (r.note.isNotBlank()) GameCard { Text(r.note, style = MaterialTheme.typography.bodyLarge) }

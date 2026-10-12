@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="goals_title">เป้าหมาย &amp; รางวัล</string>
+    <string name="goals_title">เป้าหมาย &amp; สถิติส่วนตัว</string>
     <string name="goals_add">ตั้งเป้าหมาย</string>
     <string name="goals_active">กำลังทำ</string>
     <string name="goals_done">สำเร็จแล้ว</string>
     <string name="goals_expired">หมดเวลา</string>
     <string name="goals_empty_title">ยังไม่มีเป้าหมาย</string>
-    <string name="goals_empty_text">ตั้งเป้าเล็กๆ แล้วใส่รางวัลที่อยากได้ให้ตัวเอง</string>
+    <string name="goals_empty_text">ยังไม่มีเป้าหมาย ลองตั้งเป้าระยะต่อเดือนหรือเวลา 5K ดู</string>
     <string name="goals_days_left">เหลือ %1$d วัน</string>
     <string name="goals_last_day">วันสุดท้าย!</string>
     <string name="goals_reward_locked">🔒 %1$s</string>

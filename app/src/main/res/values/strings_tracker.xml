@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Navigation -->
+    <string name="nav_history">ประวัติ</string>
+    <string name="nav_progress">พัฒนาการ</string>
+    <string name="nav_shoes">รองเท้า</string>
+
+    <!-- Home -->
+    <string name="home_last_run">วิ่งล่าสุด</string>
+    <string name="home_import">นำเข้าจาก Samsung Health</string>
+    <string name="home_first_title">ยังไม่มีการวิ่ง</string>
+    <string name="home_first_text">วิ่งเสร็จแล้วแคปหน้าสรุปใน Samsung Health แล้วกด "นำเข้า" ด้านล่าง แอปจะอ่านระยะ เวลา เพซ และชีพจรให้</string>
+    <string name="home_profile_title">ตั้งค่าโปรไฟล์ร่างกาย</string>
+    <string name="home_profile_text">อายุ เพศ ส่วนสูง ช่วยให้ VO2 Max และ BMI แม่นขึ้น</string>
+    <string name="home_vo2_none">นำเข้าการวิ่งที่มีชีพจรเพื่อเริ่มคำนวณ</string>
+    <string name="home_set_goal">+ ตั้งเป้าหมาย</string>
+
+    <!-- Progress -->
+    <string name="progress_consistency">ความสม่ำเสมอ 16 สัปดาห์</string>
+
+    <!-- Goals -->
+    <string name="goals_achieved">สำเร็จ</string>
+    <string name="unit_runs">ครั้ง</string>
+
+    <!-- Run form -->
+    <string name="run_shoe">รองเท้าที่ใส่</string>
+    <string name="run_shoe_none">ไม่ระบุ</string>
+
+    <!-- Shoes -->
+    <string name="shoe_add">เพิ่มรองเท้า</string>
+    <string name="shoe_edit">แก้ไขรองเท้า</string>
+    <string name="shoe_empty_title">ยังไม่มีรองเท้า</string>
+    <string name="shoe_empty_text">เพิ่มรองเท้าที่ใช้วิ่ง เพื่อดูระยะสะสม ความคุ้มค่าต่อกิโลเมตร และความทนทาน</string>
+    <string name="shoe_total_km">กม. รวม</string>
+    <string name="shoe_avg_cost">เฉลี่ย ฿/กม.</string>
+    <string name="shoe_active">คู่ที่ใช้อยู่</string>
+    <string name="shoe_main">คู่หลัก</string>
+    <string name="shoe_bought">ซื้อ %1$s</string>
+    <string name="shoe_bought_unknown">ไม่ระบุวันที่</string>
+    <string name="shoe_km_used">ระยะที่ใช้</string>
+    <string name="shoe_cost_per_km">บาท / กม.</string>
+    <string name="shoe_runs">จำนวนครั้ง</string>
+    <string name="shoe_durability">ความทนทาน</string>
+    <string name="shoe_durability_hint">ประเมินเองจากสภาพพื้นรองเท้าและโฟม (100% = ใหม่)</string>
+    <string name="shoe_km_left">ใช้ได้อีกราว %1$s</string>
+    <string name="shoe_retired_title">ปลดระวางแล้ว</string>
+    <string name="shoe_retired">ปลดระวาง</string>
+    <string name="shoe_per_km_suffix">/กม.</string>
+    <string name="shoe_photo">รูปรองเท้า</string>
+    <string name="shoe_add_photo">แตะเพื่อเพิ่มรูป</string>
+    <string name="shoe_name">ชื่อ / รุ่น</string>
+    <string name="shoe_name_required">ใส่ชื่อรองเท้า</string>
+    <string name="shoe_price">ราคา</string>
+    <string name="shoe_set_main">ตั้งเป็นคู่หลัก</string>
+    <string name="shoe_set_main_hint">การวิ่งที่นำเข้าใหม่จะใช้คู่นี้อัตโนมัติ</string>
+    <string name="shoe_retire">ปลดระวาง (เลิกใช้แล้ว)</string>
+    <string name="shoe_delete_title">ลบรองเท้าคู่นี้?</string>
+    <string name="shoe_delete_text">การวิ่งที่เคยผูกไว้จะยังอยู่ แต่จะไม่ระบุรองเท้า</string>
+    <string name="shoe_total_on_shoe">รวม %1$s</string>
+
+    <!-- Widget -->
+    <string name="widget_streak">วิ่งติดต่อกัน</string>
+</resources>

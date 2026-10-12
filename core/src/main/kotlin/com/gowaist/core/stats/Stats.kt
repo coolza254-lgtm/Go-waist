@@ -1,10 +1,6 @@
 package com.gowaist.core.stats
 
-import com.gowaist.core.model.Muscle
-import com.gowaist.core.model.MovementPattern
 import com.gowaist.core.model.PrType
-import com.gowaist.core.model.SetType
-import com.gowaist.core.model.TrackingType
 import com.gowaist.core.run.RunFacts
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -12,135 +8,6 @@ import java.time.temporal.TemporalAdjusters
 import kotlin.math.max
 
 fun LocalDate.weekStart(): LocalDate = with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-
-data class ExerciseFacts(
-    val id: Long,
-    val pattern: MovementPattern,
-    val primary: Set<Muscle>,
-    val secondary: Set<Muscle>,
-    val trackingType: TrackingType,
-    /** Share of body weight moved by one rep (push-up ≈ 0.64, pull-up ≈ 1.0). */
-    val bodyweightFactor: Double,
-)
-
-data class SetFacts(
-    val exerciseId: Long,
-    val sessionId: Long,
-    val date: LocalDate,
-    val setType: SetType,
-    val reps: Int?,
-    val durationSec: Int?,
-    val addedKg: Double?,
-    val assistKg: Double?,
-    val rpe: Double?,
-    val distanceM: Double? = null,
-) {
-    val isWorking: Boolean get() = setType != SetType.WARMUP
-}
-
-object WorkoutMath {
-
-    fun effectiveLoadKg(set: SetFacts, factor: Double, bodyweightKg: Double): Double =
-        max(0.0, bodyweightKg * factor + (set.addedKg ?: 0.0) - (set.assistKg ?: 0.0))
-
-    /** Kilograms moved in a set (reps × effective load). Holds and cardio sets count as 0 kg. */
-    fun setVolumeKg(set: SetFacts, factor: Double, bodyweightKg: Double): Double =
-        (set.reps ?: 0) * effectiveLoadKg(set, factor, bodyweightKg)
-
-    /** Epley estimated one-rep max. */
-    fun epley1Rm(loadKg: Double, reps: Int): Double = when {
-        reps <= 0 || loadKg <= 0 -> 0.0
-        reps == 1 -> loadKg
-        else -> loadKg * (1 + reps / 30.0)
-    }
-
-    data class Summary(val sets: Int, val reps: Int, val holdSec: Int, val volumeKg: Double)
-
-    fun summarize(sets: List<SetFacts>, exercises: Map<Long, ExerciseFacts>, bodyweightKg: Double): Summary {
-        val working = sets.filter { it.isWorking }
-        return Summary(
-            sets = working.size,
-            reps = working.sumOf { it.reps ?: 0 },
-            holdSec = working.sumOf { it.durationSec ?: 0 },
-            volumeKg = working.sumOf { s -> setVolumeKg(s, exercises[s.exerciseId]?.bodyweightFactor ?: 1.0, bodyweightKg) },
-        )
-    }
-
-    /** Best values for one exercise over a list of sets (warm-ups ignored). */
-    data class Bests(
-        val maxReps: Int = 0,
-        val longestHoldSec: Int = 0,
-        val maxSessionVolumeKg: Double = 0.0,
-        val maxSessionReps: Int = 0,
-        val bestSetScore: Double = 0.0,
-        val maxAddedKg: Double = 0.0,
-        val est1RmKg: Double = 0.0,
-    )
-
-    fun bests(sets: List<SetFacts>, exercise: ExerciseFacts, bodyweightKg: Double): Bests {
-        val working = sets.filter { it.isWorking && it.exerciseId == exercise.id }
-        if (working.isEmpty()) return Bests()
-        val bySession = working.groupBy { it.sessionId }
-        return Bests(
-            maxReps = working.maxOf { it.reps ?: 0 },
-            longestHoldSec = working.maxOf { it.durationSec ?: 0 },
-            maxSessionVolumeKg = bySession.values.maxOf { s -> s.sumOf { setVolumeKg(it, exercise.bodyweightFactor, bodyweightKg) } },
-            maxSessionReps = bySession.values.maxOf { s -> s.sumOf { it.reps ?: 0 } },
-            bestSetScore = working.maxOf { setScore(it, exercise, bodyweightKg) },
-            maxAddedKg = working.maxOf { it.addedKg ?: 0.0 },
-            est1RmKg = if (exercise.trackingType == TrackingType.WEIGHTED) {
-                working.maxOf { epley1Rm(effectiveLoadKg(it, exercise.bodyweightFactor, bodyweightKg), it.reps ?: 0) }
-            } else 0.0,
-        )
-    }
-
-    /** Single number used to compare sets: e1RM for weighted, seconds for holds, reps otherwise. */
-    fun setScore(set: SetFacts, exercise: ExerciseFacts, bodyweightKg: Double): Double = when (exercise.trackingType) {
-        TrackingType.WEIGHTED -> epley1Rm(effectiveLoadKg(set, exercise.bodyweightFactor, bodyweightKg), set.reps ?: 0)
-        TrackingType.HOLD -> (set.durationSec ?: 0).toDouble()
-        TrackingType.ASSISTED -> (set.reps ?: 0) * effectiveLoadKg(set, exercise.bodyweightFactor, bodyweightKg).coerceAtLeast(1.0)
-        TrackingType.CARDIO -> (set.distanceM ?: 0.0) + (set.reps ?: 0)
-        TrackingType.REPS -> (set.reps ?: 0).toDouble()
-    }
-
-    data class NewRecord(val exerciseId: Long, val type: PrType, val value: Double, val previous: Double)
-
-    /**
-     * Records broken by [sessionSets] compared to [history] (sets from earlier sessions).
-     * The very first time an exercise is logged sets a baseline, not a record.
-     */
-    fun newRecords(
-        sessionSets: List<SetFacts>,
-        history: List<SetFacts>,
-        exercise: ExerciseFacts,
-        bodyweightKg: Double,
-    ): List<NewRecord> {
-        val before = history.filter { it.exerciseId == exercise.id && it.isWorking }
-        val now = sessionSets.filter { it.exerciseId == exercise.id && it.isWorking }
-        if (before.isEmpty() || now.isEmpty()) return emptyList()
-        val old = bests(before, exercise, bodyweightKg)
-        val cur = bests(now, exercise, bodyweightKg)
-        val out = mutableListOf<NewRecord>()
-        fun check(type: PrType, newV: Double, oldV: Double) {
-            if (newV > 0 && newV > oldV + 1e-9) out += NewRecord(exercise.id, type, newV, oldV)
-        }
-        when (exercise.trackingType) {
-            TrackingType.HOLD -> check(PrType.LONGEST_HOLD, cur.longestHoldSec.toDouble(), old.longestHoldSec.toDouble())
-            TrackingType.WEIGHTED -> {
-                check(PrType.EST_1RM, cur.est1RmKg, old.est1RmKg)
-                check(PrType.MAX_ADDED_WEIGHT, cur.maxAddedKg, old.maxAddedKg)
-                check(PrType.MAX_REPS, cur.maxReps.toDouble(), old.maxReps.toDouble())
-                check(PrType.MAX_VOLUME_SESSION, cur.maxSessionVolumeKg, old.maxSessionVolumeKg)
-            }
-            TrackingType.CARDIO -> check(PrType.BEST_SET, cur.bestSetScore, old.bestSetScore)
-            TrackingType.REPS, TrackingType.ASSISTED -> {
-                check(PrType.MAX_REPS, cur.maxReps.toDouble(), old.maxReps.toDouble())
-                check(PrType.MAX_VOLUME_SESSION, cur.maxSessionReps.toDouble(), old.maxSessionReps.toDouble())
-            }
-        }
-        return out
-    }
-}
 
 object RunStats {
 
@@ -232,51 +99,6 @@ object Streaks {
         }
         return best
     }
-}
-
-object Balance {
-    data class MuscleLoad(val muscle: Muscle, val sets: Double)
-
-    /** Working sets per muscle: primary muscles count 1, secondary 0.5. */
-    fun muscleSets(sets: List<SetFacts>, exercises: Map<Long, ExerciseFacts>): Map<Muscle, Double> {
-        val out = Muscle.entries.associateWith { 0.0 }.toMutableMap()
-        sets.filter { it.isWorking }.forEach { s ->
-            val ex = exercises[s.exerciseId] ?: return@forEach
-            ex.primary.forEach { out[it] = out.getValue(it) + 1.0 }
-            ex.secondary.forEach { out[it] = out.getValue(it) + 0.5 }
-        }
-        return out
-    }
-
-    data class Ratios(val pushSets: Int, val pullSets: Int, val upperSets: Double, val lowerSets: Double) {
-        val pushPull: Double? get() = if (pullSets == 0) null else pushSets.toDouble() / pullSets
-        val upperLower: Double? get() = if (lowerSets == 0.0) null else upperSets / lowerSets
-        val pushPullImbalanced: Boolean get() = (pushSets >= 6 && pullSets == 0) || (pushPull?.let { it > 1.5 || it < 0.67 } ?: false)
-        val upperLowerImbalanced: Boolean get() = (upperSets >= 6 && lowerSets == 0.0) || (upperLower?.let { it > 2.0 || it < 0.5 } ?: false)
-    }
-
-    fun ratios(sets: List<SetFacts>, exercises: Map<Long, ExerciseFacts>): Ratios {
-        var push = 0
-        var pull = 0
-        var upper = 0.0
-        var lower = 0.0
-        sets.filter { it.isWorking }.forEach { s ->
-            val ex = exercises[s.exerciseId] ?: return@forEach
-            when (ex.pattern) {
-                MovementPattern.PUSH -> push++
-                MovementPattern.PULL -> pull++
-                else -> Unit
-            }
-            val ups = ex.primary.count { it.isUpper && it !in CORE }
-            val lows = ex.primary.count { !it.isUpper }
-            val total = (ups + lows).coerceAtLeast(1)
-            upper += ups.toDouble() / total
-            lower += lows.toDouble() / total
-        }
-        return Ratios(push, pull, upper, lower)
-    }
-
-    private val CORE = setOf(Muscle.ABS, Muscle.OBLIQUES, Muscle.LOWER_BACK)
 }
 
 object Smoothing {

@@ -5,11 +5,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.gowaist.app.R
 import com.gowaist.app.ui.theme.Palette
-import com.gowaist.core.Format
-import com.gowaist.core.perf.AdjustReason
 import com.gowaist.core.perf.FitnessLevel
 import com.gowaist.core.perf.FormState
-import com.gowaist.core.perf.IntervalConfig
 import com.gowaist.core.perf.Vo2Method
 import com.gowaist.core.perf.WeightTrend
 
@@ -26,7 +23,7 @@ fun FitnessLevel.label(): String = stringResource(
 )
 
 /** Colour scale from red (very poor) to purple (superior), used by gauges and level scales. */
-val LevelColors = listOf(Color(0xFFE5484D), Color(0xFFFB8B35), Color(0xFFFFC53D), Color(0xFF34C759), Color(0xFF16A6C2), Color(0xFF8B5CF6))
+val LevelColors = listOf(Palette.Red, Palette.Orange, Palette.Yellow, Palette.Green, Palette.Teal, Palette.Blue)
 
 fun FitnessLevel.color(): Color = LevelColors[ordinal]
 
@@ -43,19 +40,8 @@ fun FormState.label(): String = stringResource(
 fun FormState.color(): Color = when (this) {
     FormState.FRESH -> Palette.Teal
     FormState.OPTIMAL -> Palette.Green
-    FormState.TIRED -> Color(0xFFFB8B35)
+    FormState.TIRED -> Palette.Orange
     FormState.OVERREACHING -> Palette.Red
-}
-
-@Composable
-fun AdjustReason.label(): String? = when (this) {
-    AdjustReason.EASY -> stringResource(R.string.reason_easy)
-    AdjustReason.ON_TARGET -> stringResource(R.string.reason_on_target)
-    AdjustReason.TOO_HARD -> stringResource(R.string.reason_too_hard)
-    AdjustReason.INCOMPLETE -> stringResource(R.string.reason_incomplete)
-    AdjustReason.TARGET_REACHED -> stringResource(R.string.reason_target_reached)
-    AdjustReason.SHORT_OF_TARGET -> stringResource(R.string.reason_short)
-    AdjustReason.NONE -> null
 }
 
 @Composable
@@ -80,10 +66,6 @@ fun WeightTrend.BmiClass.label(): String = stringResource(
 fun WeightTrend.BmiClass.color(): Color = when (this) {
     WeightTrend.BmiClass.UNDER -> Palette.Blue
     WeightTrend.BmiClass.NORMAL -> Palette.Green
-    WeightTrend.BmiClass.OVER -> Color(0xFFFB8B35)
+    WeightTrend.BmiClass.OVER -> Palette.Orange
     WeightTrend.BmiClass.OBESE -> Palette.Red
 }
-
-@Composable
-fun IntervalConfig.summary(): String =
-    stringResource(R.string.suggest_interval, reps, Format.duration(workSec.toLong()), Format.duration(restSec.toLong()))

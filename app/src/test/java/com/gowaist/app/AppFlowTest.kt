@@ -25,8 +25,8 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * End-to-end smoke test on the real app (real Hilt graph, Room, DataStore): onboarding, every
- * tab and sub-tab, and a complete bodyweight session. Catches crashes in composition,
+ * End-to-end smoke test on the real app (real Hilt graph, Room, DataStore): profile, a shoe,
+ * a manual run, every tab and the tracking screens. Catches crashes in composition,
  * navigation and data wiring that unit tests cannot see.
  */
 @OptIn(ExperimentalTestApi::class)
@@ -46,17 +46,7 @@ class AppFlowTest {
         }
     }
 
-    /** Celebration dialogs (badges, goals) can pop up after saves; close them like a user would. */
-    private fun dismissCelebrations() {
-        repeat(5) {
-            if (rule.onAllNodesWithText("เย้!").fetchSemanticsNodes().isEmpty()) return
-            rule.onAllNodesWithText("เย้!").onFirst().performClick()
-            rule.waitForIdle()
-        }
-    }
-
     private fun click(text: String) {
-        dismissCelebrations()
         await(text) { rule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
         rule.onAllNodesWithText(text).onFirst().performClick()
         rule.waitForIdle()
@@ -85,141 +75,79 @@ class AppFlowTest {
         await(text) { rule.onAllNodes(hasText(text, substring = substring)).fetchSemanticsNodes().isNotEmpty() }
     }
 
+    private fun back() {
+        rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
+        rule.waitForIdle()
+    }
+
+    private fun input(index: Int, text: String) {
+        rule.onAllNodes(hasSetTextAction())[index].performTextInput(text)
+        rule.waitForIdle()
+    }
+
     @Test
-    fun onboardingTabsAndWorkoutSession() {
-        // Onboarding
-        waitFor("สวัสดี! ฉันชื่อ Gogo")
-        click("ถัดไป")
-        waitFor("ตั้งหน่วยที่ใช้")
-        click("ถัดไป")
-        waitFor("มีอุปกรณ์อะไรบ้าง?")
-        click("บาร์โหน")
-        click("ถัดไป")
-        waitFor("ตั้งเป้าหมายแรกกัน!")
-        click("เริ่มใช้งาน!")
+    fun profileShoeRunAndTrackingScreens() {
+        // Home, first launch
+        waitFor("Go waist")
+        waitFor("ยังไม่มีการวิ่ง")
 
-        // Home
-        waitFor("วันนี้")
-        waitFor("สัปดาห์นี้")
+        // (The profile dialog is not driven here: text fields in dialogs never go idle under Robolectric.)
+        waitFor("ตั้งค่าโปรไฟล์ร่างกาย")
 
-        // Run tab: game menu hub, then the run log with its empty state
-        click("วิ่ง")
-        waitFor("สนามวิ่ง")
-        scrollTag("menu_log")
-        waitFor("ยังไม่มีผลวิ่ง")
+        // A pair of shoes becomes the main pair
+        click("รองเท้า")
+        waitFor("ยังไม่มีรองเท้า")
+        tag("shoe_add")
+        rule.onNode(hasTestTag("shoe_name")).performTextInput("Pegasus 41")
+        input(1, "4200")
+        tag("shoe_save")
+        waitFor("Pegasus 41")
+        waitFor("คู่หลัก")
 
-        // Manual run entry
-        tag("fab_run")
-        click("กรอกเอง")
+        // Manual run, the main shoe is preselected
+        click("หน้าหลัก")
+        scrollTag("home_manual")
         waitFor("บันทึกการวิ่ง")
-        // Fields in order: distance, hours, minutes, seconds, ...
-        rule.onAllNodes(hasSetTextAction())[0].performTextInput("5.2")
-        rule.onAllNodes(hasSetTextAction())[2].performTextInput("31")
+        input(0, "5.2")
+        input(2, "31")
+        input(5, "150")
         click("บันทึก")
-        waitFor("ประวัติ")
+        waitFor("วิ่งล่าสุด", substring = true)
+        waitFor("5.2", substring = true)
+
+        // History and its sub-tabs
+        click("ประวัติ")
         waitFor("5.2", substring = true)
         click("สถิติ")
-        waitFor("Personal Best")
         click("ปฏิทิน")
-        click("ประวัติ")
-        rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
-        rule.waitForIdle()
+        click("รายการ")
 
-        // Free run program: start, finish, record result
-        waitFor("สนามวิ่ง")
-        scrollTag("prog_FREE")
-        tag("program_start")
-        tag("hud_finish")
-        waitFor("ระยะทาง", substring = true)
-        rule.onAllNodes(hasSetTextAction())[0].performTextInput("3")
-        rule.onAllNodes(hasSetTextAction())[2].performTextInput("20")
-        tag("result_save")
-        tag("saved_done")
-
-        // Tracking screens
-        waitFor("สนามวิ่ง")
-        scrollTag("menu_vo2")
-        waitFor("VO2 Max", substring = true)
-        rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
-        rule.waitForIdle()
-        scrollTag("menu_perf")
-        waitFor("Performance", substring = true)
-        rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
-        rule.waitForIdle()
-        scrollTag("menu_weight")
+        // Progress hub and detail screens
+        click("พัฒนาการ")
+        scrollTag("progress_vo2")
+        waitFor("ระดับความฟิต", substring = true)
+        back()
+        scrollTag("progress_perf")
+        waitFor("โซนชีพจร", substring = true)
+        back()
+        scrollTag("progress_weight")
         tag("weight_save")
         waitFor("70 กก.", substring = true)
-        rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
-        rule.waitForIdle()
-
-        // Train tab and its sub-tabs
-        click("ฝึก")
-        waitFor("เริ่มเปล่า")
-        click("คลังท่า")
-        waitFor("ครันช์", substring = true)
-        click("สายความก้าวหน้า")
-        waitFor("สายวิดพื้น")
-        click("สถิติ")
-        click("เริ่มฝึก")
-
-        // Session from a template
-        waitFor("Full Body มือใหม่")
-        click("Full Body มือใหม่")
-        waitFor("บันทึกเซ็ต")
-        click("บันทึกเซ็ต")
-        waitFor("พัก")
-        click("บันทึกเซ็ต")
-        click("ทำซ้ำเซ็ตก่อนหน้า")
-        waitFor("3/3") // third set stored (writes finish off the UI thread)
-        // The rest timer ticks continuously (by design); skip it so the UI can settle.
-        await("rest bar") { rule.onAllNodes(hasContentDescription("ข้ามการพัก")).fetchSemanticsNodes().isNotEmpty() }
-        rule.onNode(hasContentDescription("ข้ามการพัก")).performClick()
-        click("จบเซสชัน")
-        waitFor("จบเซสชันนี้?")
-        click("😄")
-        rule.onAllNodesWithText("จบเซสชัน")[1].performClick()
-        waitFor("สรุปเซสชัน")
-        click("กลับหน้าหลัก")
-
-        // Stats now have data
-        click("สถิติ")
-        scrollTo("กล้ามเนื้อที่ฝึก")
-        scrollTo("ความสมดุล (30 วัน)")
-
-        // Plan tab: create a prebuilt plan
-        click("แผน")
-        waitFor("ยังไม่มีแผนซ้อม")
-        click("เลือกแผน")
-        scrollTo("วิ่ง + Bodyweight")
-        click("วิ่ง + Bodyweight")
-        scrollTo("ใช้แผนนี้")
-        click("ใช้แผนนี้")
-        waitFor("ตารางซ้อม")
-        tag("fab_plan")
-        click("กำหนดเอง")
-        scrollTo("ตรวจโหลดของตาราง")
-        scrollTo("สร้าง")
-        click("สร้าง")
-        waitFor("ตารางซ้อม")
-
-        // Goals tab
-        click("เป้าหมาย")
-        waitFor("เหรียญตรา")
+        back()
+        scrollTag("progress_goals")
+        waitFor("5K")
         tag("fab_goal")
         waitFor("ชนิดเป้าหมาย")
-        rule.onAllNodes(hasSetTextAction())[0].performTextInput("20")
+        input(0, "20")
         click("บันทึก")
         waitFor("กำลังทำ")
+        back()
 
-        // Home again with data, then settings and body metrics
+        // Shoe stats picked up the run
+        click("รองเท้า")
+        waitFor("5")
         click("หน้าหลัก")
-        rule.onNodeWithContentDescription("เมนู").performClick()
-        click("Body Metrics")
-        waitFor("บันทึกน้ำหนักวันนี้")
-        rule.activity.onBackPressedDispatcher.onBackPressed()
-        rule.onNodeWithContentDescription("เมนู").performClick()
-        click("ตั้งค่า")
-        waitFor("ข้อมูล & สำรอง")
-        rule.onNodeWithText("หน่วย").assertExists()
+        rule.onNodeWithContentDescription("ตั้งค่า").performClick()
+        waitFor("หน่วย")
     }
 }

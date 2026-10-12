@@ -51,7 +51,6 @@ import com.gowaist.app.ui.LocalAppSettings
 import com.gowaist.app.ui.components.ArcGauge
 import com.gowaist.app.ui.components.ChartSeries
 import com.gowaist.app.ui.components.EmptyState
-import com.gowaist.app.ui.components.GameBanner
 import com.gowaist.app.ui.components.GameButton
 import com.gowaist.app.ui.components.GameCard
 import com.gowaist.app.ui.components.LevelScale
@@ -59,11 +58,11 @@ import com.gowaist.app.ui.components.MultiLineChart
 import com.gowaist.app.ui.components.Pill
 import com.gowaist.app.ui.components.SectionHeader
 import com.gowaist.app.ui.nav.RunDetailRoute
-import com.gowaist.app.ui.nav.RunProgramRoute
+import com.gowaist.app.ui.nav.RunImportRoute
+import androidx.compose.material.icons.rounded.Download
 import com.gowaist.app.ui.theme.Gw
 import com.gowaist.app.ui.theme.Palette
 import com.gowaist.core.Format
-import com.gowaist.core.mascot.MascotMood
 import com.gowaist.core.perf.Profile
 import com.gowaist.core.perf.RunType
 import com.gowaist.core.perf.Vo2Max
@@ -120,10 +119,9 @@ fun Vo2Screen(nav: NavHostController, vm: PerfViewModel = hiltViewModel()) {
         when {
             d == null -> Box(Modifier.padding(pad).fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             d.daily.isEmpty() -> EmptyState(
-                stringResource(R.string.vo2_empty_title), stringResource(R.string.vo2_empty_text), Modifier.padding(pad),
-                mood = MascotMood.CHEER, actionText = stringResource(R.string.prog_cooper), onAction = { nav.navigate(RunProgramRoute(RunType.COOPER.name)) },
+                stringResource(R.string.vo2_empty_title), stringResource(R.string.vo2_empty_text), Modifier.padding(pad), actionText = stringResource(R.string.home_import), onAction = { nav.navigate(RunImportRoute) },
             )
-            else -> Vo2Content(d, Modifier.padding(pad), onProfile = { editProfile = true }, openRun = { nav.navigate(RunDetailRoute(it)) }, cooper = { nav.navigate(RunProgramRoute(RunType.COOPER.name)) })
+            else -> Vo2Content(d, Modifier.padding(pad), onProfile = { editProfile = true }, openRun = { nav.navigate(RunDetailRoute(it)) }, cooper = { nav.navigate(RunImportRoute) })
         }
     }
     if (editProfile) {
@@ -137,18 +135,18 @@ private fun Vo2Content(d: PerformanceData, modifier: Modifier, onProfile: () -> 
     val current = d.current ?: return
     val level = d.level
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        GameBanner(listOf(Palette.Pink, Palette.Purple), seed = 4) {
+        GameCard(Modifier.fillMaxWidth(), fill = Gw.colors.goal) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                ArcGauge(Format.decimal(current, 1), stringResource(R.string.vo2_unit), ((current - 20) / 45).toFloat(), size = 150.dp, modifier = Modifier.testTag("vo2_value"))
+                ArcGauge(Format.decimal(current, 1), stringResource(R.string.vo2_unit), ((current - 20) / 45).toFloat(), color = Color.White, size = 140.dp, modifier = Modifier.testTag("vo2_value"))
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.vo2_level), color = Color.White.copy(alpha = 0.9f), style = MaterialTheme.typography.labelLarge)
-                    if (level != null) Text(level.label(), color = Palette.Yellow, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
+                    if (level != null) Text(level.label(), color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(6.dp))
                     d.change(30)?.let { ch ->
                         Text(
                             (if (ch >= 0) "▲ +" else "▼ ") + stringResource(R.string.vo2_change, Format.decimal(ch, 1)),
-                            color = Color.White, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold,
+                            color = Color.White, style = MaterialTheme.typography.titleSmall,
                         )
                     }
                 }
@@ -222,7 +220,7 @@ private fun Vo2Content(d: PerformanceData, modifier: Modifier, onProfile: () -> 
                 }
             }
         }
-        GameButton(stringResource(R.string.prog_cooper), cooper, color = Palette.Blue, icon = Icons.Rounded.Timer, modifier = Modifier.fillMaxWidth())
+        GameButton(stringResource(R.string.home_import), cooper, icon = Icons.Rounded.Download, modifier = Modifier.fillMaxWidth())
 
         GameCard {
             Text(stringResource(R.string.vo2_how), style = MaterialTheme.typography.titleMedium)

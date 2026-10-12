@@ -48,6 +48,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.gowaist.app.R
 import com.gowaist.app.data.db.RunEntity
+import com.gowaist.app.data.db.ShoeEntity
 import com.gowaist.app.data.key
 import com.gowaist.app.data.toEpochMillis
 import com.gowaist.app.data.toLocalDate
@@ -55,6 +56,13 @@ import com.gowaist.app.data.toLocalDateTime
 import com.gowaist.app.ui.Fmt
 import com.gowaist.app.ui.components.label
 import com.gowaist.app.ui.theme.Gw
+import com.gowaist.app.ui.theme.Palette
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.Route
+import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
 import com.gowaist.core.DistanceUnit
 import com.gowaist.core.Format
 import com.gowaist.core.Pace
@@ -93,6 +101,7 @@ class RunForm(val unit: DistanceUnit) {
     var runType by mutableStateOf(RunType.FREE)
     var rpe by mutableStateOf<Int?>(null)
     var intervalJson: String? = null
+    var shoeId by mutableStateOf<Long?>(null)
     var createdAt = System.currentTimeMillis()
 
     /** Long runs only track distance, so their time may be left empty. */
@@ -145,6 +154,7 @@ class RunForm(val unit: DistanceUnit) {
         runType = r.runType
         rpe = r.rpe?.roundToInt()
         intervalJson = r.intervalJson
+        shoeId = r.shoeId
         createdAt = r.createdAt
     }
 
@@ -167,6 +177,7 @@ class RunForm(val unit: DistanceUnit) {
             runType = runType,
             rpe = rpe?.toDouble(),
             intervalJson = intervalJson,
+            shoeId = shoeId,
         )
     }
 }
@@ -182,7 +193,7 @@ private fun fieldColors(low: Boolean) = if (low) {
 } else OutlinedTextFieldDefaults.colors()
 
 @Composable
-fun RunFormContent(form: RunForm, existingTags: List<String>, modifier: Modifier = Modifier) {
+fun RunFormContent(form: RunForm, existingTags: List<String>, modifier: Modifier = Modifier, shoes: List<ShoeEntity> = emptyList()) {
     var pickDate by remember { mutableStateOf(false) }
     var pickTime by remember { mutableStateOf(false) }
     val low = form.lowConfidence
@@ -243,6 +254,7 @@ fun RunFormContent(form: RunForm, existingTags: List<String>, modifier: Modifier
             OutlinedTextField(form.calories, { form.calories = it.filter(Char::isDigit).take(5); touched(RunField.CALORIES) }, label = { Text(stringResource(R.string.run_calories)) }, suffix = { Text(stringResource(R.string.unit_kcal)) }, keyboardOptions = numbers, singleLine = true, modifier = Modifier.weight(1f), colors = fieldColors(RunField.CALORIES in low))
             OutlinedTextField(form.hr, { form.hr = it.filter(Char::isDigit).take(3); touched(RunField.HR) }, label = { Text(stringResource(R.string.run_avg_hr)) }, suffix = { Text(stringResource(R.string.unit_bpm)) }, keyboardOptions = numbers, singleLine = true, modifier = Modifier.weight(1f), colors = fieldColors(RunField.HR in low))
         }
+        if (shoes.isNotEmpty()) ShoePicker(shoes, form.shoeId) { form.shoeId = it }
         RunTypePicker(form.runType) { form.runType = it }
         RpePicker(form.rpe) { form.rpe = it }
         TagEditor(form.tags, (stringArrayResource(R.array.run_tag_presets).toList() + existingTags).distinct()) { form.tags = it }
@@ -365,4 +377,38 @@ fun RpePicker(value: Int?, onChange: (Int?) -> Unit) {
         (1..10).forEach { n -> FilterChip(value == n, { onChange(if (value == n) null else n) }, label = { Text("$n") }) }
     }
     Text(stringResource(R.string.run_rpe_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+/** Shoe worn on the run; retired pairs only show when already selected. */
+@Composable
+fun ShoePicker(shoes: List<ShoeEntity>, selected: Long?, onChange: (Long?) -> Unit) {
+    Text(stringResource(R.string.run_shoe), style = MaterialTheme.typography.labelLarge)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        shoes.filter { !it.retired || it.id == selected }.forEach { sh ->
+            FilterChip(selected == sh.id, { onChange(if (selected == sh.id) null else sh.id) }, label = { Text(sh.name) })
+        }
+        FilterChip(selected == null, { onChange(null) }, label = { Text(stringResource(R.string.run_shoe_none)) })
+    }
+}
+
+/** Colours of the run kinds, used for icons and labels. */
+object ProgramColors {
+    val cooper = Palette.Blue
+    val interval = Palette.Purple
+    val free = Palette.Teal
+    val long = Palette.Orange
+
+    fun of(t: RunType): Color = when (t) {
+        RunType.COOPER -> cooper
+        RunType.INTERVAL -> interval
+        RunType.FREE -> free
+        RunType.LONG -> long
+    }
+}
+
+fun RunType.icon(): ImageVector = when (this) {
+    RunType.COOPER -> Icons.Rounded.Timer
+    RunType.INTERVAL -> Icons.Rounded.Bolt
+    RunType.FREE -> Icons.AutoMirrored.Rounded.DirectionsRun
+    RunType.LONG -> Icons.Rounded.Route
 }

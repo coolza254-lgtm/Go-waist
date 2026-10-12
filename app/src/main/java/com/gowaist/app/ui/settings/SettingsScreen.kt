@@ -21,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.Description
-import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
@@ -37,8 +36,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -67,20 +64,16 @@ import com.gowaist.app.data.settings.AppSettings
 import com.gowaist.app.data.settings.SettingsRepository
 import com.gowaist.app.data.settings.ThemeMode
 import com.gowaist.app.domain.ActivityCoordinator
-import com.gowaist.app.notify.Notifications
-import com.gowaist.app.notify.ReminderWorker
 import com.gowaist.app.ui.GwTopBar
 import com.gowaist.app.ui.components.ConfirmDialog
 import com.gowaist.app.ui.components.GameButton
 import com.gowaist.app.ui.components.GameCard
-import com.gowaist.app.ui.components.labelRes
 import com.gowaist.app.ui.theme.Gw
 import com.gowaist.core.DistanceUnit
 import com.gowaist.core.Format
 import com.gowaist.core.LengthUnit
 import com.gowaist.core.Units
 import com.gowaist.core.WeightUnit
-import com.gowaist.core.model.Equipment
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
@@ -101,8 +94,6 @@ class SettingsViewModel @Inject constructor(
 
     fun update(f: (AppSettings) -> AppSettings) = viewModelScope.launch {
         repo.update(f)
-        val s = repo.current()
-        ReminderWorker.schedule(context, s.reminderHour, s.reminderMinute)
     }
 
     private fun run(done: String, block: suspend () -> Unit) = viewModelScope.launch {
@@ -110,10 +101,9 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun export(uri: android.net.Uri, done: String) = run(done) { backup.exportTo(uri) }
-    fun import(uri: android.net.Uri, done: String) = run(done) { backup.importFrom(uri); coordinator.afterChange(celebrate = false) }
+    fun import(uri: android.net.Uri, done: String) = run(done) { backup.importFrom(uri); coordinator.afterChange() }
     fun runsCsv(uri: android.net.Uri, done: String) = run(done) { backup.writeText(uri, backup.runsCsv()) }
-    fun setsCsv(uri: android.net.Uri, done: String) = run(done) { backup.writeText(uri, backup.setsCsv()) }
-    fun wipe(done: String) = run(done) { backup.wipeAll(); coordinator.afterChange(celebrate = false) }
+    fun wipe(done: String) = run(done) { backup.wipeAll(); coordinator.afterChange() }
 }
 
 @Composable
@@ -128,32 +118,17 @@ fun SettingsScreen(nav: NavHostController, vm: SettingsViewModel = hiltViewModel
     val doneWipe = stringResource(R.string.set_done_wipe)
     var pendingImport by remember { mutableStateOf<android.net.Uri?>(null) }
     var wipeStep by remember { mutableStateOf(0) }
-    var pickTime by remember { mutableStateOf(false) }
     var editProfile by remember { mutableStateOf(false) }
-    var notifAllowed by remember { mutableStateOf(Notifications.canPost(context)) }
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { it?.let { u -> vm.export(u, doneExport) } }
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { pendingImport = it }
     val runsCsv = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { it?.let { u -> vm.runsCsv(u, doneCsv) } }
-    val setsCsv = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { it?.let { u -> vm.setsCsv(u, doneCsv) } }
-    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { notifAllowed = it }
 
     LaunchedEffect(vm.message) { vm.message?.let { snack.showSnackbar(it); vm.message = null } }
 
     Scaffold(topBar = { GwTopBar(stringResource(R.string.set_title), onBack = { nav.popBackStack() }) }, snackbarHost = { SnackbarHost(snack) }) { pad ->
         Column(Modifier.padding(pad).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Section(stringResource(R.string.set_profile)) {
-                // Local text wins once the user types, so async saves never reset the cursor.
-                var nick by remember { mutableStateOf<String?>(null) }
-                OutlinedTextField(nick ?: s.nickname, { t -> val v = t.take(24); nick = v; vm.update { st -> st.copy(nickname = v) } }, label = { Text(stringResource(R.string.set_nickname)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                var bw by remember(s.weightUnit) { mutableStateOf<String?>(null) }
-                OutlinedTextField(
-                    bw ?: Format.decimal(Units.kgTo(s.weightUnit, s.bodyweightKg), 1),
-                    { t -> val v = t.filter { it.isDigit() || it == '.' }.take(5); bw = v; v.toDoubleOrNull()?.takeIf { it in 20.0..660.0 }?.let { x -> vm.update { st -> st.copy(bodyweightKg = Units.toKg(st.weightUnit, x)) } } },
-                    label = { Text(stringResource(R.string.set_bodyweight)) }, supportingText = { Text(stringResource(R.string.set_bodyweight_text)) },
-                    suffix = { Text(stringResource(if (s.weightUnit == WeightUnit.KG) R.string.unit_kg else R.string.unit_lb)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true, modifier = Modifier.fillMaxWidth(),
-                )
                 OutlinedButton({ editProfile = true }, Modifier.fillMaxWidth().testTag("open_profile")) {
                     Text(
                         stringResource(R.string.profile_title) + listOfNotNull(
@@ -162,42 +137,11 @@ fun SettingsScreen(nav: NavHostController, vm: SettingsViewModel = hiltViewModel
                         ).joinToString(""),
                     )
                 }
-                Text(stringResource(R.string.set_equipment), style = MaterialTheme.typography.labelLarge)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Equipment.entries.filter { it != Equipment.NONE }.forEach { e ->
-                        val on = e in s.equipment
-                        FilterChip(on, { vm.update { st -> st.copy(equipment = if (on) st.equipment - e else st.equipment + e) } }, label = { Text(stringResource(e.labelRes())) })
-                    }
-                }
             }
             Section(stringResource(R.string.set_units)) {
                 Seg(listOf(DistanceUnit.KM to R.string.unit_km, DistanceUnit.MI to R.string.unit_mi), s.distanceUnit) { u -> vm.update { it.copy(distanceUnit = u) } }
                 Seg(listOf(WeightUnit.KG to R.string.unit_kg, WeightUnit.LB to R.string.unit_lb), s.weightUnit) { u -> vm.update { it.copy(weightUnit = u) } }
                 Seg(listOf(LengthUnit.CM to R.string.unit_cm, LengthUnit.IN to R.string.unit_in), s.lengthUnit) { u -> vm.update { it.copy(lengthUnit = u) } }
-            }
-            Section(stringResource(R.string.set_training)) {
-                Text(stringResource(R.string.set_default_rest), style = MaterialTheme.typography.labelLarge)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf(30, 45, 60, 90, 120, 180).forEach { r -> FilterChip(s.defaultRestSec == r, { vm.update { it.copy(defaultRestSec = r) } }, label = { Text(stringResource(R.string.set_sec, r)) }) }
-                }
-                Toggle(stringResource(R.string.set_keep_screen), s.keepScreenOn) { v -> vm.update { it.copy(keepScreenOn = v) } }
-                Toggle(stringResource(R.string.set_haptics), s.hapticsEnabled) { v -> vm.update { it.copy(hapticsEnabled = v) } }
-                Toggle(stringResource(R.string.set_sound), s.soundEnabled) { v -> vm.update { it.copy(soundEnabled = v) } }
-            }
-            Section(stringResource(R.string.set_reminders)) {
-                Toggle(stringResource(R.string.set_reminders), s.remindersEnabled) { v -> vm.update { it.copy(remindersEnabled = v) } }
-                Text(stringResource(R.string.set_reminder_text), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Row(Modifier.fillMaxWidth().clickable { pickTime = true }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.set_reminder_time), Modifier.weight(1f))
-                    Text(String.format(java.util.Locale.US, "%02d:%02d", s.reminderHour, s.reminderMinute), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                }
-                if (!notifAllowed && Build.VERSION.SDK_INT >= 33) {
-                    TextButton({ permission.launch(Manifest.permission.POST_NOTIFICATIONS) }) {
-                        Icon(Icons.Rounded.NotificationsActive, null)
-                        Spacer(Modifier.width(6.dp))
-                        Text(stringResource(R.string.set_notifications_off))
-                    }
-                }
             }
             Section(stringResource(R.string.set_display)) {
                 Seg(listOf(ThemeMode.SYSTEM to R.string.set_theme_system, ThemeMode.LIGHT to R.string.set_theme_light, ThemeMode.DARK to R.string.set_theme_dark), s.themeMode) { m -> vm.update { it.copy(themeMode = m) } }
@@ -210,7 +154,6 @@ fun SettingsScreen(nav: NavHostController, vm: SettingsViewModel = hiltViewModel
                 ActionRow(Icons.Rounded.Backup, stringResource(R.string.set_export), stringResource(R.string.set_export_text)) { exportLauncher.launch("gowaist-backup-$today.json") }
                 ActionRow(Icons.Rounded.Restore, stringResource(R.string.set_import), stringResource(R.string.set_import_text)) { importLauncher.launch(arrayOf("application/json", "application/octet-stream", "text/plain")) }
                 ActionRow(Icons.Rounded.Description, stringResource(R.string.set_csv_runs), null) { runsCsv.launch("gowaist-runs-$today.csv") }
-                ActionRow(Icons.Rounded.Description, stringResource(R.string.set_csv_sets), null) { setsCsv.launch("gowaist-sets-$today.csv") }
                 Spacer(Modifier.height(4.dp))
                 GameButton(stringResource(R.string.set_wipe), { wipeStep = 1 }, color = Gw.colors.danger, icon = Icons.Rounded.DeleteForever, modifier = Modifier.fillMaxWidth())
                 Text(stringResource(R.string.set_wipe_text), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -218,7 +161,6 @@ fun SettingsScreen(nav: NavHostController, vm: SettingsViewModel = hiltViewModel
             Section(stringResource(R.string.set_about)) {
                 Text(stringResource(R.string.set_version, BuildConfig.VERSION_NAME), style = MaterialTheme.typography.bodyMedium)
                 Text(stringResource(R.string.set_privacy), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                TextButton({ vm.update { it.copy(onboardingDone = false) } }) { Text(stringResource(R.string.set_onboarding)) }
             }
             Spacer(Modifier.height(24.dp))
         }
@@ -249,21 +191,12 @@ fun SettingsScreen(nav: NavHostController, vm: SettingsViewModel = hiltViewModel
     if (editProfile) {
         ProfileDialog(s, onSave = { p -> vm.update { it.copy(age = p.age, sex = p.sex, heightCm = p.heightCm, restHr = p.restHr, maxHr = p.maxHr) }; editProfile = false }, onDismiss = { editProfile = false })
     }
-    if (pickTime) {
-        val state = rememberTimePickerState(s.reminderHour, s.reminderMinute, is24Hour = true)
-        AlertDialog(
-            onDismissRequest = { pickTime = false },
-            confirmButton = { TextButton({ vm.update { it.copy(reminderHour = state.hour, reminderMinute = state.minute) }; pickTime = false }) { Text(stringResource(R.string.action_ok)) } },
-            dismissButton = { TextButton({ pickTime = false }) { Text(stringResource(R.string.action_cancel)) } },
-            text = { TimePicker(state) },
-        )
-    }
 }
 
 @Composable
 private fun Section(title: String, content: @Composable () -> Unit) {
-    GameCard {
-        Text(title, style = MaterialTheme.typography.titleLarge)
+    GameCard(Modifier.fillMaxWidth()) {
+        Text(title, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) { content() }
     }

@@ -23,6 +23,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.getValue
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
@@ -166,10 +170,10 @@ fun CalendarHeatmap(
     weeks: Int,
     today: LocalDate,
     modifier: Modifier = Modifier,
-    color: Color = Gw.colors.heatHigh,
+    color: Color = MaterialTheme.colorScheme.primary,
     description: String = "",
 ) {
-    val low = Gw.colors.heatLow
+    val low = color.copy(alpha = 0.25f)
     val empty = Gw.colors.track
     val max = (values.values.maxOrNull() ?: 0f).coerceAtLeast(0.0001f)
     val start = today.with(DayOfWeek.MONDAY).minusWeeks((weeks - 1).toLong())
@@ -333,5 +337,81 @@ fun MultiLineChart(
                 }
             }
         }
+    }
+}
+
+/** Tiny trend line without axes, for summary cards. */
+@Composable
+fun Sparkline(values: List<Float>, color: Color, modifier: Modifier = Modifier.fillMaxWidth().height(30.dp)) {
+    if (values.size < 2) return
+    val min = values.min()
+    val span = (values.max() - min).takeIf { it > 0.0001f } ?: 1f
+    Canvas(modifier) {
+        val path = Path()
+        values.forEachIndexed { i, v ->
+            val x = i * size.width / (values.size - 1)
+            val y = size.height - (v - min) / span * (size.height - 4f) - 2f
+            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+        drawPath(path, color, style = Stroke(2.5.dp.toPx(), cap = StrokeCap.Round))
+    }
+}
+
+/** Seven square-ended day bars (Monday first); today's bar uses [highlight]. */
+@Composable
+fun WeekBars(values: List<Double>, todayIndex: Int, color: Color, highlight: Color, modifier: Modifier = Modifier.fillMaxWidth().height(30.dp)) {
+    val track = Gw.colors.track
+    val max = (values.maxOrNull() ?: 0.0).coerceAtLeast(0.001)
+    Canvas(modifier) {
+        val n = values.size.coerceAtLeast(1)
+        val gap = size.width * 0.06f
+        val w = (size.width - gap * (n - 1)) / n
+        values.forEachIndexed { i, v ->
+            val h = if (v <= 0) 3.dp.toPx() else (v / max * size.height).toFloat().coerceAtLeast(4.dp.toPx())
+            drawRect(if (v <= 0) track else if (i == todayIndex) highlight else color, topLeft = Offset(i * (w + gap), size.height - h), size = Size(w, h))
+        }
+    }
+}
+
+/** Arc gauge with a number in the middle. */
+@Composable
+fun ArcGauge(
+    value: String,
+    label: String,
+    fraction: Float,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.onSurface,
+    track: Color = color.copy(alpha = 0.22f),
+    size: Dp = 132.dp,
+) {
+    val f by animateFloatAsState(fraction.coerceIn(0f, 1f), tween(800), label = "gauge")
+    Box(modifier.size(size), contentAlignment = Alignment.Center) {
+        Canvas(Modifier.fillMaxSize()) {
+            val stroke = this.size.minDimension * 0.1f
+            val inset = stroke / 2
+            val arcSize = Size(this.size.width - stroke, this.size.height - stroke)
+            drawArc(track, 135f, 270f, false, Offset(inset, inset), arcSize, style = Stroke(stroke, cap = StrokeCap.Butt))
+            if (f > 0f) drawArc(color, 135f, 270f * f, false, Offset(inset, inset), arcSize, style = Stroke(stroke, cap = StrokeCap.Butt))
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(value, color = color, fontSize = (size.value * 0.24f).sp, fontWeight = FontWeight.Bold, lineHeight = (size.value * 0.27f).sp)
+            Text(label, color = color.copy(alpha = 0.85f), style = MaterialTheme.typography.labelSmall)
+        }
+    }
+}
+
+/** Segmented scale (poor → superior) with a marker at [position] 0–1. */
+@Composable
+fun LevelScale(segments: List<Color>, position: Float, modifier: Modifier = Modifier, height: Dp = 12.dp) {
+    val p by animateFloatAsState(position.coerceIn(0f, 1f), tween(800), label = "scale")
+    val ink = Gw.colors.ink
+    Canvas(modifier.fillMaxWidth().height(height + 12.dp)) {
+        val gap = 3.dp.toPx()
+        val segW = (size.width - gap * (segments.size - 1)) / segments.size
+        val h = height.toPx()
+        val top = 6.dp.toPx()
+        segments.forEachIndexed { i, c -> drawRect(c, Offset(i * (segW + gap), top), Size(segW, h)) }
+        val x = (size.width * p).coerceIn(4f, size.width - 4f)
+        drawRect(ink, Offset(x - 2.dp.toPx(), 0f), Size(4.dp.toPx(), size.height))
     }
 }

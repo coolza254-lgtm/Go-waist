@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="run_title">การวิ่ง</string>
-    <string name="run_tab_history">ประวัติ</string>
+    <string name="run_tab_history">รายการ</string>
     <string name="run_tab_stats">สถิติ</string>
     <string name="run_tab_calendar">ปฏิทิน</string>
     <string name="run_add">เพิ่มการวิ่ง</string>

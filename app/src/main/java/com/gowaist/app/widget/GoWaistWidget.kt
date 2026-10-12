@@ -8,8 +8,6 @@ import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
-import androidx.glance.Image
-import androidx.glance.ImageProvider
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
@@ -25,7 +23,6 @@ import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
-import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
@@ -35,11 +32,9 @@ import com.gowaist.app.MainActivity
 import com.gowaist.app.R
 import com.gowaist.app.data.db.GoWaistDatabase
 import com.gowaist.app.data.toLocalDate
-import com.gowaist.app.ui.components.labelRes
 import com.gowaist.core.Format
-import com.gowaist.core.model.PlanDayStatus
-import com.gowaist.core.model.PlanDayType
 import com.gowaist.core.stats.Streaks
+import com.gowaist.core.stats.weekStart
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
@@ -58,9 +53,9 @@ object WidgetUpdater {
     }
 }
 
-private data class WidgetData(val plan: String, val status: String?, val streak: Int)
+private data class WidgetData(val weekKm: Double, val lastKm: Double?, val lastDate: LocalDate?, val streak: Int)
 
-/** Home-screen widget: today's plan and the current streak. */
+/** Home-screen widget: distance this week, the latest run and the running streak. */
 class GoWaistWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
@@ -71,43 +66,41 @@ class GoWaistWidget : GlanceAppWidget() {
     private suspend fun load(context: Context): WidgetData {
         val db = EntryPointAccessors.fromApplication(context, WidgetEntryPoint::class.java).database()
         val today = LocalDate.now()
-        val days = db.planDao().activeDays(today.toString(), today.toString())
-        val day = days.firstOrNull()
-        val plan = when {
-            day == null -> context.getString(R.string.widget_no_plan)
-            else -> context.getString(day.type.labelRes()) + (day.targetDistanceM?.let { " · " + Format.decimal(it / 1000.0, 1) + " " + context.getString(R.string.unit_km) } ?: "")
-        }
-        val status = day?.status?.takeIf { it == PlanDayStatus.DONE || it == PlanDayStatus.OVER }?.let { context.getString(R.string.status_done) }
-        val active = (db.runDao().getAll().map { it.localDate } + db.sessionDao().getAll().filter { !it.isDraft }.map { it.localDate })
-            .map { it.toLocalDate() }.toSet()
-        val rest = db.planDao().getAllDays().filter { it.type == PlanDayType.REST }.map { it.date.toLocalDate() }.toSet()
-        return WidgetData(plan, status, Streaks.current(active, rest, today))
+        val runs = db.runDao().getAll()
+        val ws = today.weekStart()
+        val week = runs.filter { !it.localDate.toLocalDate().isBefore(ws) }.sumOf { it.distanceM } / 1000
+        val last = runs.firstOrNull()
+        return WidgetData(week, last?.distanceM?.div(1000), last?.localDate?.toLocalDate(), Streaks.current(runs.map { it.localDate.toLocalDate() }.toSet(), emptySet(), today))
     }
-
 
     @Composable
     private fun Content(d: WidgetData) {
-        val orange = ColorProvider(Color(0xFFFB5B35))
-        val white = ColorProvider(Color.White)
-        val cream = ColorProvider(Color(0xFFFFE8C2))
+        val cream = ColorProvider(Color(0xFFF4ECDD))
+        val ink = ColorProvider(Color(0xFF2A2420))
+        val muted = ColorProvider(Color(0xFF6B6055))
+        val accent = ColorProvider(Color(0xFFC9533A))
         Column(
-            GlanceModifier.fillMaxSize().background(orange).cornerRadius(24.dp).padding(14.dp)
+            GlanceModifier.fillMaxSize().background(cream).cornerRadius(16.dp).padding(14.dp)
                 .clickable(actionStartActivity<MainActivity>()),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(ImageProvider(R.drawable.ic_stat_gowaist), contentDescription = null, modifier = GlanceModifier.size(22.dp))
-                Spacer(GlanceModifier.width(6.dp))
-                Text("Go waist", style = TextStyle(color = white, fontWeight = FontWeight.Bold, fontSize = 14.sp))
+            Text("Go waist", style = TextStyle(color = ink, fontWeight = FontWeight.Bold, fontSize = 13.sp))
+            Spacer(GlanceModifier.height(6.dp))
+            Text(LocalContextString(R.string.home_this_week), style = TextStyle(color = muted, fontSize = 12.sp))
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(Format.decimal(d.weekKm, 1), style = TextStyle(color = ink, fontWeight = FontWeight.Bold, fontSize = 26.sp))
+                Spacer(GlanceModifier.width(4.dp))
+                Text(LocalContextString(R.string.unit_km), style = TextStyle(color = muted, fontSize = 13.sp))
             }
-            Spacer(GlanceModifier.height(8.dp))
-            Text(
-                LocalContextString(R.string.widget_today),
-                style = TextStyle(color = cream, fontSize = 12.sp),
-            )
-            Text(d.plan, style = TextStyle(color = white, fontWeight = FontWeight.Bold, fontSize = 16.sp), maxLines = 2)
-            d.status?.let { Text("✓ $it", style = TextStyle(color = cream, fontSize = 12.sp, fontWeight = FontWeight.Bold)) }
             Spacer(GlanceModifier.defaultWeight())
-            Text("🔥 " + d.streak + " " + LocalContextString(R.string.widget_streak_days), style = TextStyle(color = white, fontWeight = FontWeight.Bold, fontSize = 15.sp))
+            if (d.lastKm != null && d.lastDate != null) {
+                Text(
+                    LocalContextString(R.string.home_last_run) + " " + Format.decimal(d.lastKm, 2) + " " + LocalContextString(R.string.unit_km) + " · " + d.lastDate.dayOfMonth + "/" + d.lastDate.monthValue,
+                    style = TextStyle(color = ink, fontSize = 12.sp), maxLines = 1,
+                )
+            }
+            if (d.streak > 0) {
+                Text(LocalContextString(R.string.widget_streak) + " " + d.streak + " " + LocalContextString(R.string.widget_streak_days), style = TextStyle(color = accent, fontWeight = FontWeight.Bold, fontSize = 12.sp))
+            }
         }
     }
 

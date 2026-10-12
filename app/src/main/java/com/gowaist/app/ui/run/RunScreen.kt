@@ -71,7 +71,7 @@ import com.gowaist.app.data.toFacts
 import com.gowaist.app.data.toLocalDate
 import com.gowaist.app.data.toLocalDateTime
 import com.gowaist.app.ui.Fmt
-import com.gowaist.app.ui.GwTopBar
+import androidx.compose.foundation.layout.statusBarsPadding
 import com.gowaist.app.ui.LocalAppSettings
 import com.gowaist.app.ui.components.BarChart
 import com.gowaist.app.ui.components.ChartPoint
@@ -111,12 +111,12 @@ class RunViewModel @Inject constructor(runs: RunRepository) : ViewModel() {
 }
 
 @Composable
-fun RunLogScreen(nav: NavHostController, vm: RunViewModel = hiltViewModel()) {
+fun HistoryScreen(nav: NavHostController, vm: RunViewModel = hiltViewModel()) {
     val runs by vm.runs.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableStateOf(0) }
     var fabMenu by remember { mutableStateOf(false) }
     Scaffold(
-        topBar = { GwTopBar(stringResource(R.string.menu_log), onBack = { nav.popBackStack() }) },
+        modifier = Modifier.statusBarsPadding(),
         floatingActionButton = {
             Box {
                 ExtendedFloatingActionButton(
@@ -124,7 +124,7 @@ fun RunLogScreen(nav: NavHostController, vm: RunViewModel = hiltViewModel()) {
                     onClick = { fabMenu = true },
                     icon = { Icon(Icons.Rounded.Add, null) },
                     text = { Text(stringResource(R.string.run_add)) },
-                    containerColor = Gw.colors.run,
+                    containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                 )
                 DropdownMenu(fabMenu, { fabMenu = false }) {
@@ -135,6 +135,7 @@ fun RunLogScreen(nav: NavHostController, vm: RunViewModel = hiltViewModel()) {
         },
     ) { pad ->
         Column(Modifier.padding(pad).fillMaxSize()) {
+            Text(stringResource(R.string.nav_history), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp))
             PrimaryTabRow(selectedTabIndex = tab, containerColor = MaterialTheme.colorScheme.background) {
                 listOf(R.string.run_tab_history, R.string.run_tab_stats, R.string.run_tab_calendar).forEachIndexed { i, t ->
                     Tab(tab == i, { tab = i }, text = { Text(stringResource(t)) })
@@ -259,11 +260,11 @@ private fun RunStatsTab(runs: List<RunEntity>) {
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             StatTile(stringResource(R.string.run_total_distance), Fmt.distanceValue(t.distanceM, 1), Modifier.weight(1f), unit = unit.label(), icon = Icons.Rounded.Straighten, color = Gw.colors.run)
-            StatTile(stringResource(R.string.run_total_runs), "${t.count}", Modifier.weight(1f), unit = stringResource(R.string.unit_sessions), icon = Icons.AutoMirrored.Rounded.DirectionsRun, color = Gw.colors.plan)
+            StatTile(stringResource(R.string.run_total_runs), "${t.count}", Modifier.weight(1f), unit = stringResource(R.string.unit_sessions), icon = Icons.AutoMirrored.Rounded.DirectionsRun, color = Gw.colors.muted)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             StatTile(stringResource(R.string.run_avg_pace), Fmt.paceValue(t.avgPaceSecPerKm), Modifier.weight(1f), icon = Icons.Rounded.Speed, color = Gw.colors.goal)
-            StatTile(stringResource(R.string.run_total_time), Fmt.duration(t.durationSec), Modifier.weight(1f), icon = Icons.Rounded.Timer, color = Gw.colors.train)
+            StatTile(stringResource(R.string.run_total_time), Fmt.duration(t.durationSec), Modifier.weight(1f), icon = Icons.Rounded.Timer, color = Gw.colors.goal)
         }
         val longest = RunStats.longest(inPeriod)
         val fastest = RunStats.fastestPace(facts)

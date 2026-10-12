@@ -21,28 +21,25 @@ import androidx.compose.ui.unit.sp
 import com.gowaist.app.data.settings.ThemeMode
 
 /*
- * Design tokens. Every colour, radius, spacing and text style used by the app comes from here,
- * so the whole look can be changed in one place.
+ * Design tokens: a calm cream page, ink outlines with a small offset shadow (a light 2D-game
+ * touch) and two accents, terracotta for running and teal for progress. Every colour, radius
+ * and text style used by the app comes from here.
  */
 
 @Immutable
 data class GameColors(
+    /** Outline and offset shadow of cards and buttons. */
+    val ink: Color,
     val run: Color,
-    val train: Color,
-    val plan: Color,
     val goal: Color,
-    val rest: Color,
     val success: Color,
     val warning: Color,
     val danger: Color,
     val gold: Color,
     val card: Color,
-    val cardBorder: Color,
-    val buttonShade: Color,
+    val line: Color,
     val track: Color,
     val muted: Color,
-    val heatLow: Color,
-    val heatHigh: Color,
 )
 
 @Immutable
@@ -52,153 +49,142 @@ data class Spacing(
     val m: Dp = 12.dp,
     val l: Dp = 16.dp,
     val xl: Dp = 24.dp,
-    val xxl: Dp = 32.dp,
-    /** Minimum height of tappable controls (generous for sweaty hands). */
-    val touch: Dp = 56.dp,
-    val bigTouch: Dp = 72.dp,
+    /** Minimum height of tappable controls. */
+    val touch: Dp = 52.dp,
+    val bigTouch: Dp = 58.dp,
 )
 
 @Immutable
 data class Radii(
-    val s: Dp = 12.dp,
-    val m: Dp = 20.dp,
-    val l: Dp = 28.dp,
+    val s: Dp = 8.dp,
+    val m: Dp = 12.dp,
+    val l: Dp = 16.dp,
     val pill: Dp = 100.dp,
 )
 
 object Palette {
-    val Orange = Color(0xFFFB5B35)
-    val OrangeDark = Color(0xFFC9401F)
-    val Yellow = Color(0xFFFFD23F)
-    val YellowDark = Color(0xFFD9A800)
-    val Teal = Color(0xFF16C2A3)
-    val TealDark = Color(0xFF0E8F78)
-    val Blue = Color(0xFF3D8BFF)
-    val BlueDark = Color(0xFF2361C4)
-    val Purple = Color(0xFF8B5CF6)
-    val PurpleDark = Color(0xFF6237C8)
-    val Pink = Color(0xFFFF5C8A)
-    val Green = Color(0xFF34C759)
-    val Red = Color(0xFFE5484D)
-    val Cream = Color(0xFFFFF7EC)
-    val Ink = Color(0xFF2B2140)
-    val Night = Color(0xFF1A1430)
-    val NightCard = Color(0xFF2A2147)
+    val Cream = Color(0xFFF4ECDD)
+    val Paper = Color(0xFFFFF9EE)
+    val Ink = Color(0xFF2A2420)
+    val InkSoft = Color(0xFF6B6055)
+    val Line = Color(0xFFD8CCB6)
+    val Terracotta = Color(0xFFC9533A)
+    val Teal = Color(0xFF3C7A6E)
+    val Mustard = Color(0xFFB8860B)
+    val Red = Color(0xFFB83A2E)
+
+    // Muted chart colours that sit well on cream.
+    val Blue = Color(0xFF3F6E9A)
+    val Purple = Color(0xFF7A5C8E)
+    val Pink = Color(0xFFC0566B)
+    val Green = Color(0xFF5E8C4E)
+    val Orange = Color(0xFFD9822B)
+    val Yellow = Color(0xFFE9C46A)
+
+    val Night = Color(0xFF1C1915)
+    val NightCard = Color(0xFF28231E)
+    val NightInk = Color(0xFFEFE6D6)
 }
 
 private val LightScheme = lightColorScheme(
-    primary = Palette.Orange,
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFFFE1D6),
-    onPrimaryContainer = Color(0xFF5A1500),
-    secondary = Palette.Yellow,
-    onSecondary = Palette.Ink,
-    secondaryContainer = Color(0xFFFFF0B8),
-    onSecondaryContainer = Color(0xFF3D2E00),
-    tertiary = Palette.Teal,
-    onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFC8F5EA),
-    onTertiaryContainer = Color(0xFF00382D),
+    primary = Palette.Terracotta,
+    onPrimary = Palette.Paper,
+    primaryContainer = Color(0xFFF6DDD3),
+    onPrimaryContainer = Color(0xFF4A160A),
+    secondary = Palette.Teal,
+    onSecondary = Palette.Paper,
+    secondaryContainer = Color(0xFFD5E8E3),
+    onSecondaryContainer = Color(0xFF0E2E28),
+    tertiary = Palette.Mustard,
+    onTertiary = Palette.Paper,
     background = Palette.Cream,
     onBackground = Palette.Ink,
-    surface = Color.White,
+    surface = Palette.Paper,
     onSurface = Palette.Ink,
-    surfaceVariant = Color(0xFFF6EBDD),
-    onSurfaceVariant = Color(0xFF6B5E7A),
-    surfaceContainer = Color(0xFFFFF1E2),
-    surfaceContainerHigh = Color(0xFFFCEAD7),
-    surfaceContainerLow = Color(0xFFFFF9F2),
-    outline = Color(0xFFD9C7B4),
-    outlineVariant = Color(0xFFEBDCCB),
+    surfaceVariant = Color(0xFFEDE3D1),
+    onSurfaceVariant = Palette.InkSoft,
+    surfaceContainer = Palette.Paper,
+    surfaceContainerHigh = Color(0xFFF8F0E2),
+    surfaceContainerHighest = Color(0xFFF1E7D6),
+    surfaceContainerLow = Palette.Paper,
+    surfaceContainerLowest = Palette.Paper,
+    outline = Palette.Ink,
+    outlineVariant = Palette.Line,
     error = Palette.Red,
 )
 
 private val DarkScheme = darkColorScheme(
-    primary = Color(0xFFFF7A57),
-    onPrimary = Color(0xFF3A0B00),
-    primaryContainer = Color(0xFF7A2A12),
-    onPrimaryContainer = Color(0xFFFFDBCF),
-    secondary = Palette.Yellow,
-    onSecondary = Palette.Ink,
-    secondaryContainer = Color(0xFF5C4A00),
-    onSecondaryContainer = Color(0xFFFFF0B8),
-    tertiary = Color(0xFF3FE0C0),
-    onTertiary = Color(0xFF00382D),
-    tertiaryContainer = Color(0xFF0D5446),
-    onTertiaryContainer = Color(0xFFC8F5EA),
+    primary = Color(0xFFE5745A),
+    onPrimary = Color(0xFF2B0E06),
+    primaryContainer = Color(0xFF5A2416),
+    onPrimaryContainer = Color(0xFFF6DDD3),
+    secondary = Color(0xFF6FB3A5),
+    onSecondary = Color(0xFF0E2E28),
+    secondaryContainer = Color(0xFF1F4A42),
+    onSecondaryContainer = Color(0xFFD5E8E3),
+    tertiary = Color(0xFFE0B04A),
+    onTertiary = Color(0xFF2A1E00),
     background = Palette.Night,
-    onBackground = Color(0xFFF4EEFF),
+    onBackground = Palette.NightInk,
     surface = Palette.NightCard,
-    onSurface = Color(0xFFF4EEFF),
-    surfaceVariant = Color(0xFF3A3060),
-    onSurfaceVariant = Color(0xFFC9BFE0),
-    surfaceContainer = Color(0xFF241C40),
-    surfaceContainerHigh = Color(0xFF30275A),
-    surfaceContainerLow = Color(0xFF1F1838),
-    outline = Color(0xFF5B4F80),
-    outlineVariant = Color(0xFF40366A),
-    error = Color(0xFFFF6B6F),
+    onSurface = Palette.NightInk,
+    surfaceVariant = Color(0xFF35302A),
+    onSurfaceVariant = Color(0xFFB9AC99),
+    surfaceContainer = Palette.NightCard,
+    surfaceContainerHigh = Color(0xFF302A24),
+    surfaceContainerHighest = Color(0xFF38312A),
+    surfaceContainerLow = Palette.NightCard,
+    surfaceContainerLowest = Palette.Night,
+    outline = Color(0xFF8F8373),
+    outlineVariant = Color(0xFF4A4239),
+    error = Color(0xFFE5675A),
 )
 
 private val LightGame = GameColors(
-    run = Palette.Orange,
-    train = Palette.Blue,
-    plan = Palette.Purple,
+    ink = Palette.Ink,
+    run = Palette.Terracotta,
     goal = Palette.Teal,
-    rest = Color(0xFF9AA5B8),
-    success = Palette.Green,
-    warning = Color(0xFFFFA41B),
+    success = Palette.Teal,
+    warning = Color(0xFFB7791F),
     danger = Palette.Red,
-    gold = Palette.Yellow,
-    card = Color.White,
-    cardBorder = Color(0xFFF0E1CF),
-    buttonShade = Color(0x33000000),
-    track = Color(0xFFF1E4D3),
-    muted = Color(0xFF8E829E),
-    heatLow = Color(0xFFFFE8C2),
-    heatHigh = Palette.Orange,
+    gold = Palette.Mustard,
+    card = Palette.Paper,
+    line = Palette.Line,
+    track = Color(0xFFE9DFCC),
+    muted = Palette.InkSoft,
 )
 
 private val DarkGame = GameColors(
-    run = Color(0xFFFF7A57),
-    train = Color(0xFF6AA6FF),
-    plan = Color(0xFFA889FF),
-    goal = Color(0xFF3FE0C0),
-    rest = Color(0xFF7D86A0),
-    success = Color(0xFF4ADE80),
-    warning = Color(0xFFFFB547),
-    danger = Color(0xFFFF6B6F),
-    gold = Palette.Yellow,
+    ink = Color(0xFF0E0C0A),
+    run = Color(0xFFE5745A),
+    goal = Color(0xFF6FB3A5),
+    success = Color(0xFF6FB3A5),
+    warning = Color(0xFFE0A84A),
+    danger = Color(0xFFE5675A),
+    gold = Color(0xFFE0B04A),
     card = Palette.NightCard,
-    cardBorder = Color(0xFF3B3166),
-    buttonShade = Color(0x66000000),
-    track = Color(0xFF3A3060),
-    muted = Color(0xFFA79CC4),
-    heatLow = Color(0xFF3A3060),
-    heatHigh = Color(0xFFFF7A57),
+    line = Color(0xFF4A4239),
+    track = Color(0xFF3A332C),
+    muted = Color(0xFFB9AC99),
 )
 
 private val AppTypography = Typography().let { t ->
     t.copy(
-        displayLarge = t.displayLarge.copy(fontWeight = FontWeight.Black),
-        displayMedium = t.displayMedium.copy(fontWeight = FontWeight.Black),
-        displaySmall = t.displaySmall.copy(fontWeight = FontWeight.ExtraBold),
-        headlineLarge = t.headlineLarge.copy(fontWeight = FontWeight.ExtraBold),
-        headlineMedium = t.headlineMedium.copy(fontWeight = FontWeight.ExtraBold),
+        headlineLarge = t.headlineLarge.copy(fontWeight = FontWeight.Bold),
+        headlineMedium = t.headlineMedium.copy(fontWeight = FontWeight.Bold),
         headlineSmall = t.headlineSmall.copy(fontWeight = FontWeight.Bold),
-        titleLarge = t.titleLarge.copy(fontWeight = FontWeight.Bold),
-        titleMedium = t.titleMedium.copy(fontWeight = FontWeight.Bold),
-        titleSmall = t.titleSmall.copy(fontWeight = FontWeight.Bold),
-        labelLarge = t.labelLarge.copy(fontWeight = FontWeight.Bold, fontSize = 16.sp),
-        bodyLarge = t.bodyLarge.copy(fontSize = 17.sp),
+        titleLarge = t.titleLarge.copy(fontWeight = FontWeight.SemiBold),
+        titleMedium = t.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+        titleSmall = t.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+        labelLarge = t.labelLarge.copy(fontWeight = FontWeight.SemiBold, fontSize = 15.sp),
     )
 }
 
-/** Big numbers on stat tiles and timers. */
+/** Big numbers on stat blocks. */
 object NumberStyles {
-    val huge = TextStyle(fontSize = 64.sp, fontWeight = FontWeight.Black, lineHeight = 68.sp)
-    val big = TextStyle(fontSize = 34.sp, fontWeight = FontWeight.Black, lineHeight = 38.sp)
-    val medium = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, lineHeight = 26.sp)
+    val huge = TextStyle(fontSize = 52.sp, fontWeight = FontWeight.Bold, lineHeight = 56.sp)
+    val big = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold, lineHeight = 34.sp)
+    val medium = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold, lineHeight = 24.sp)
 }
 
 val LocalGameColors = staticCompositionLocalOf { LightGame }
@@ -231,16 +217,15 @@ fun GoWaistTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () 
             colorScheme = scheme,
             typography = AppTypography,
             shapes = Shapes(
-                extraSmall = RoundedCornerShape(8.dp),
+                extraSmall = RoundedCornerShape(6.dp),
                 small = RoundedCornerShape(radii.s),
                 medium = RoundedCornerShape(radii.m),
                 large = RoundedCornerShape(radii.l),
-                extraLarge = RoundedCornerShape(32.dp),
+                extraLarge = RoundedCornerShape(20.dp),
             ),
             content = content,
         )
     }
 }
 
-/** Slightly darker shade for the 3D bottom edge of game buttons. */
 fun Color.shade(factor: Float = 0.78f): Color = Color(red * factor, green * factor, blue * factor, alpha)

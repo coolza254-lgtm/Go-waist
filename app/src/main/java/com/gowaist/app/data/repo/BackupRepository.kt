@@ -3,29 +3,17 @@ package com.gowaist.app.data.repo
 import android.content.Context
 import android.net.Uri
 import androidx.room.withTransaction
-import com.gowaist.app.data.Seeder
-import com.gowaist.app.data.db.BadgeEntity
 import com.gowaist.app.data.db.BodyMetricEntity
-import com.gowaist.app.data.db.ChainEntity
-import com.gowaist.app.data.db.ChainStepEntity
-import com.gowaist.app.data.db.ExerciseEntity
 import com.gowaist.app.data.db.GoWaistDatabase
 import com.gowaist.app.data.db.GoalEntity
 import com.gowaist.app.data.db.PersonalRecordEntity
-import com.gowaist.app.data.db.PlanDayEntity
-import com.gowaist.app.data.db.PlanEntity
-import com.gowaist.app.data.db.RewardEntity
 import com.gowaist.app.data.db.RunEntity
-import com.gowaist.app.data.db.SessionEntity
-import com.gowaist.app.data.db.SessionExerciseEntity
-import com.gowaist.app.data.db.SetEntity
-import com.gowaist.app.data.db.SuggestionStateEntity
-import com.gowaist.app.data.db.TemplateEntity
-import com.gowaist.app.data.db.TemplateItemEntity
+import com.gowaist.app.data.db.ShoeEntity
 import com.gowaist.app.data.settings.AppSettings
 import com.gowaist.app.data.settings.SettingsRepository
 import com.gowaist.app.data.toLocalDateTime
 import com.gowaist.core.Format
+import com.gowaist.core.model.GoalType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -36,7 +24,10 @@ import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Everything the app stores, in one versioned JSON document. */
+/**
+ * Everything the app stores, in one versioned JSON document. Version 1 files (with workout data)
+ * still import: their extra fields are ignored and only running and body data is kept.
+ */
 @Serializable
 data class BackupFile(
     val format: String = FORMAT,
@@ -44,27 +35,14 @@ data class BackupFile(
     val exportedAt: Long = System.currentTimeMillis(),
     val settings: AppSettings = AppSettings(),
     val runs: List<RunEntity> = emptyList(),
-    val exercises: List<ExerciseEntity> = emptyList(),
-    val chains: List<ChainEntity> = emptyList(),
-    val chainSteps: List<ChainStepEntity> = emptyList(),
-    val templates: List<TemplateEntity> = emptyList(),
-    val templateItems: List<TemplateItemEntity> = emptyList(),
-    val sessions: List<SessionEntity> = emptyList(),
-    val sessionExercises: List<SessionExerciseEntity> = emptyList(),
-    val sets: List<SetEntity> = emptyList(),
-    val plans: List<PlanEntity> = emptyList(),
-    val planDays: List<PlanDayEntity> = emptyList(),
     val goals: List<GoalEntity> = emptyList(),
-    val rewards: List<RewardEntity> = emptyList(),
-    val badges: List<BadgeEntity> = emptyList(),
     val bodyMetrics: List<BodyMetricEntity> = emptyList(),
     val records: List<PersonalRecordEntity> = emptyList(),
-    val suggestions: List<SuggestionStateEntity> = emptyList(),
-    val programs: ProgramState = ProgramState(),
+    val shoes: List<ShoeEntity> = emptyList(),
 ) {
     companion object {
         const val FORMAT = "gowaist-backup"
-        const val CURRENT_VERSION = 1
+        const val CURRENT_VERSION = 2
     }
 }
 
@@ -75,8 +53,6 @@ class BackupRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val db: GoWaistDatabase,
     private val settings: SettingsRepository,
-    private val seeder: Seeder,
-    private val programs: ProgramRepository,
 ) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; prettyPrint = false }
 
@@ -84,23 +60,10 @@ class BackupRepository @Inject constructor(
         BackupFile(
             settings = settings.current(),
             runs = db.runDao().getAll(),
-            exercises = db.exerciseDao().getAll(),
-            chains = db.chainDao().getAll().map { it.chain },
-            chainSteps = db.chainDao().allSteps(),
-            templates = db.templateDao().getAllTemplates(),
-            templateItems = db.templateDao().getAllItems(),
-            sessions = db.sessionDao().getAll(),
-            sessionExercises = db.sessionDao().getAllExercises(),
-            sets = db.sessionDao().getAllSets(),
-            plans = db.planDao().getAll(),
-            planDays = db.planDao().getAllDays(),
             goals = db.goalDao().getAll(),
-            rewards = db.goalDao().getAllRewards(),
-            badges = db.goalDao().getBadges(),
             bodyMetrics = db.bodyDao().getAll(),
             records = db.recordDao().getAll(),
-            suggestions = db.suggestionDao().getAll(),
-            programs = programs.current(),
+            shoes = db.shoeDao().getAll(),
         )
     }
 
@@ -136,42 +99,28 @@ class BackupRepository @Inject constructor(
         runCatching { File(context.filesDir, "before_restore.json").writeText(encode(snapshot())) }
         db.withTransaction {
             deleteAllRows()
-            db.exerciseDao().insertAll(file.exercises)
-            db.chainDao().insertAllChains(file.chains)
-            db.chainDao().insertAllSteps(file.chainSteps)
-            db.templateDao().insertAllTemplates(file.templates)
-            db.templateDao().insertAllItems(file.templateItems)
-            db.planDao().insertAllPlans(file.plans)
-            db.planDao().insertAllDays(file.planDays)
-            db.sessionDao().insertAllSessions(file.sessions)
-            db.sessionDao().insertAllExercises(file.sessionExercises)
-            db.sessionDao().insertAllSets(file.sets)
-            db.runDao().insertAll(file.runs.map { r -> r.copy(sourceImagePath = r.sourceImagePath?.takeIf { File(it).exists() }) })
-            db.goalDao().insertAllGoals(file.goals)
-            db.goalDao().insertAllRewards(file.rewards)
-            db.goalDao().insertAllBadges(file.badges)
+            db.shoeDao().insertAll(file.shoes.map { sh -> sh.copy(imagePath = sh.imagePath?.takeIf { File(it).exists() }) })
+            val shoeIds = file.shoes.map { it.id }.toSet()
+            db.runDao().insertAll(
+                file.runs.map { r -> r.copy(sourceImagePath = r.sourceImagePath?.takeIf { File(it).exists() }, shoeId = r.shoeId?.takeIf { it in shoeIds }) },
+            )
+            db.goalDao().insertAllGoals(file.goals.filter { it.type !in WORKOUT_GOALS })
             db.bodyDao().insertAll(file.bodyMetrics)
-            db.recordDao().replaceAll(file.records)
-            db.suggestionDao().insertAll(file.suggestions)
+            val runIds = file.runs.map { it.id }.toSet()
+            db.recordDao().replaceAll(file.records.filter { it.runId != null && it.runId in runIds })
         }
         settings.replace(file.settings.copy(onboardingDone = true))
-        programs.replace(file.programs)
-        seeder.ensureSeeded()
     }
 
-    /** Deletes every record and stored image, then reinstalls the built-in library. */
+    /** Deletes every record and stored image. */
     suspend fun wipeAll() = withContext(Dispatchers.IO) {
         db.withTransaction { deleteAllRows() }
         File(context.filesDir, "run_images").deleteRecursively()
-        seeder.ensureSeeded()
     }
 
     private fun deleteAllRows() {
         val sql = db.openHelper.writableDatabase
-        listOf(
-            "personal_records", "sets", "session_exercises", "sessions", "plan_days", "plans", "rewards", "goals",
-            "template_items", "templates", "chain_steps", "chains", "runs", "exercises", "badges", "body_metrics", "suggestion_states",
-        ).forEach { sql.execSQL("DELETE FROM `$it`") }
+        listOf("personal_records", "goals", "runs", "body_metrics", "shoes").forEach { sql.execSQL("DELETE FROM `$it`") }
     }
 
     // ------------------------------------------------------------------ CSV
@@ -184,33 +133,14 @@ class BackupRepository @Inject constructor(
     suspend fun runsCsv(): String {
         val dateFmt = DateTimeFormatter.ofPattern("HH:mm")
         val sb = StringBuilder("﻿")
-        sb.appendLine(csv("date", "start_time", "distance_km", "duration", "duration_sec", "pace_per_km", "calories", "avg_hr", "tags", "note"))
+        sb.appendLine(csv("date", "start_time", "distance_km", "duration", "duration_sec", "pace_per_km", "calories", "avg_hr", "shoe", "tags", "note"))
+        val shoes = db.shoeDao().getAll().associate { it.id to it.name }
         db.runDao().getAll().sortedBy { it.startAt }.forEach { r ->
             sb.appendLine(
                 csv(
                     r.localDate, r.startAt.toLocalDateTime().format(dateFmt), Format.decimal(r.distanceM / 1000.0, 3),
                     Format.duration(r.durationSec), r.durationSec, Format.pace(r.avgPaceSecPerKm), r.calories, r.avgHr,
-                    r.tags.joinToString("|"), r.note,
-                ),
-            )
-        }
-        return sb.toString()
-    }
-
-    suspend fun setsCsv(): String {
-        val exercises = db.exerciseDao().getAll().associateBy { it.id }
-        val sessions = db.sessionDao().getAll().associateBy { it.id }
-        val sb = StringBuilder("﻿")
-        sb.appendLine(
-            csv("date", "session_id", "session_name", "exercise", "exercise_en", "set_no", "set_type", "reps", "duration_sec", "added_kg", "assist_kg", "distance_m", "rpe", "rir", "note"),
-        )
-        db.sessionDao().finishedSetRows().forEach { row ->
-            val s = row.set
-            val ex = exercises[row.exerciseId]
-            sb.appendLine(
-                csv(
-                    row.localDate, row.sessionId, sessions[row.sessionId]?.name, ex?.nameTh, ex?.nameEn, s.setOrder + 1, s.setType.name,
-                    s.reps, s.durationSec, s.addedWeightKg, s.assistKg, s.distanceM, s.rpe, s.rir, s.note,
+                    r.shoeId?.let { shoes[it] }, r.tags.joinToString("|"), r.note,
                 ),
             )
         }
@@ -222,3 +152,5 @@ class BackupRepository @Inject constructor(
             ?: throw BackupException("เขียนไฟล์ไม่ได้")
     }
 }
+
+private val WORKOUT_GOALS = setOf(GoalType.BW_SESSIONS, GoalType.EXERCISE_MAX_REPS, GoalType.EXERCISE_HOLD, GoalType.EXERCISE_TOTAL_REPS)

@@ -1,11 +1,7 @@
 package com.gowaist.core.stats
 
 import com.gowaist.core.Format
-import com.gowaist.core.model.MovementPattern
-import com.gowaist.core.model.Muscle
 import com.gowaist.core.model.PrType
-import com.gowaist.core.model.SetType
-import com.gowaist.core.model.TrackingType
 import com.gowaist.core.run.RunChecks
 import com.gowaist.core.run.RunFacts
 import com.gowaist.core.run.RunWarning
@@ -20,55 +16,6 @@ import java.time.LocalDate
 class StatsTest {
     private val d0 = LocalDate.of(2026, 10, 1)
 
-    private val pushup = ExerciseFacts(1, MovementPattern.PUSH, setOf(Muscle.CHEST), setOf(Muscle.TRICEPS), TrackingType.REPS, 0.64)
-    private val wPull = ExerciseFacts(2, MovementPattern.PULL, setOf(Muscle.BACK), setOf(Muscle.BICEPS), TrackingType.WEIGHTED, 1.0)
-    private val plank = ExerciseFacts(3, MovementPattern.CORE, setOf(Muscle.ABS), emptySet(), TrackingType.HOLD, 0.0)
-    private val squat = ExerciseFacts(4, MovementPattern.LEGS, setOf(Muscle.LEGS, Muscle.GLUTES), emptySet(), TrackingType.REPS, 0.7)
-
-    private fun set(ex: Long, session: Long, reps: Int? = null, sec: Int? = null, kg: Double? = null, type: SetType = SetType.NORMAL, date: LocalDate = d0, rpe: Double? = null) =
-        SetFacts(ex, session, date, type, reps, sec, kg, null, rpe)
-
-    @Test
-    fun `epley formula`() {
-        assertEquals(100.0, WorkoutMath.epley1Rm(100.0, 1), 1e-9)
-        assertEquals(100.0 * (1 + 10 / 30.0), WorkoutMath.epley1Rm(100.0, 10), 1e-9)
-        assertEquals(0.0, WorkoutMath.epley1Rm(100.0, 0), 1e-9)
-    }
-
-    @Test
-    fun `volume uses body weight factor and added load and skips warmups`() {
-        val sets = listOf(set(1, 1, reps = 10), set(1, 1, reps = 10, type = SetType.WARMUP), set(2, 1, reps = 5, kg = 10.0))
-        val s = WorkoutMath.summarize(sets, mapOf(1L to pushup, 2L to wPull), bodyweightKg = 70.0)
-        assertEquals(2, s.sets)
-        assertEquals(15, s.reps)
-        assertEquals(10 * 70 * 0.64 + 5 * 80.0, s.volumeKg, 1e-6)
-    }
-
-    @Test
-    fun `new records only after a baseline exists`() {
-        val first = listOf(set(1, 1, reps = 10))
-        assertTrue(WorkoutMath.newRecords(first, emptyList(), pushup, 70.0).isEmpty())
-        val second = listOf(set(1, 2, reps = 12), set(1, 2, reps = 8))
-        val recs = WorkoutMath.newRecords(second, first, pushup, 70.0).map { it.type }
-        assertTrue(PrType.MAX_REPS in recs)
-        assertTrue(PrType.MAX_VOLUME_SESSION in recs)
-    }
-
-    @Test
-    fun `weighted records include estimated 1RM`() {
-        val before = listOf(set(2, 1, reps = 5, kg = 5.0))
-        val now = listOf(set(2, 2, reps = 5, kg = 10.0))
-        val recs = WorkoutMath.newRecords(now, before, wPull, 70.0).map { it.type }
-        assertTrue(PrType.EST_1RM in recs)
-        assertTrue(PrType.MAX_ADDED_WEIGHT in recs)
-    }
-
-    @Test
-    fun `hold record`() {
-        val recs = WorkoutMath.newRecords(listOf(set(3, 2, sec = 75)), listOf(set(3, 1, sec = 60)), plank, 70.0)
-        assertEquals(PrType.LONGEST_HOLD, recs.single().type)
-        assertEquals(75.0, recs.single().value, 0.0)
-    }
 
     private fun run(id: Long, km: Double, sec: Long, date: LocalDate = d0) = RunFacts(id, id * 1000, date, km * 1000, sec)
 
@@ -110,19 +57,6 @@ class StatsTest {
         assertEquals(2, Streaks.current(active, emptySet(), today))
         assertEquals(0, Streaks.current(setOf(today.minusDays(3)), emptySet(), today))
         assertEquals(3, Streaks.longest(active, rest))
-    }
-
-    @Test
-    fun `balance ratios flag push heavy training`() {
-        val sets = (1..9).map { set(1, 1, reps = 10) } + (1..3).map { set(4, 1, reps = 10) }
-        val r = Balance.ratios(sets, mapOf(1L to pushup, 4L to squat))
-        assertEquals(9, r.pushSets)
-        assertEquals(0, r.pullSets)
-        assertTrue(r.pushPullImbalanced)
-        assertTrue(r.upperLowerImbalanced)
-        val muscles = Balance.muscleSets(sets, mapOf(1L to pushup, 4L to squat))
-        assertEquals(9.0, muscles.getValue(Muscle.CHEST), 0.0)
-        assertEquals(4.5, muscles.getValue(Muscle.TRICEPS), 0.0)
     }
 
     @Test
