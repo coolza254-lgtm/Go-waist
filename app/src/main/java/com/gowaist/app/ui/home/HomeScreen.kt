@@ -39,6 +39,23 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.gowaist.app.R
+import androidx.compose.ui.graphics.Color
+import com.gowaist.app.data.db.BodyMetricEntity
+import com.gowaist.app.data.repo.BodyRepository
+import com.gowaist.app.data.repo.PerformanceData
+import com.gowaist.app.data.repo.ShoeWithStats
+import com.gowaist.app.data.toFacts
+import com.gowaist.app.ui.components.paceLabel
+import com.gowaist.app.ui.nav.BodyRoute
+import com.gowaist.app.ui.nav.PerformanceRoute
+import com.gowaist.app.ui.perf.color
+import com.gowaist.app.ui.perf.label
+import com.gowaist.app.ui.shoes.baht
+import com.gowaist.core.Units
+import com.gowaist.core.perf.RunPaces
+import com.gowaist.core.perf.TrainingLoad
+import com.gowaist.core.perf.WeightTrend
+import com.gowaist.core.stats.RunStats
 import com.gowaist.app.data.db.GoalEntity
 import com.gowaist.app.data.db.RunEntity
 import com.gowaist.app.data.repo.GoalRepository
@@ -95,12 +112,14 @@ class HomeViewModel @Inject constructor(
     runs: RunRepository,
     perf: PerformanceRepository,
     shoes: ShoeRepository,
+    body: BodyRepository,
     private val goalRepo: GoalRepository,
     private val settings: SettingsRepository,
 ) : ViewModel() {
     val runs = runs.runs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     val perf = perf.data.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     val shoes = shoes.shoes.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val body = body.metrics.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val goals = goalRepo.goals.map { l -> l.filter { it.status == GoalStatus.ACTIVE }.take(3) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     var progress by mutableStateOf<Map<Long, GoalProgress>>(emptyMap())
@@ -119,6 +138,7 @@ fun HomeScreen(nav: NavHostController, vm: HomeViewModel = hiltViewModel()) {
     val perf by vm.perf.collectAsStateWithLifecycle()
     val shoes by vm.shoes.collectAsStateWithLifecycle()
     val goals by vm.goals.collectAsStateWithLifecycle()
+    val body by vm.body.collectAsStateWithLifecycle()
     val settings = LocalAppSettings.current
     var editProfile by remember { mutableStateOf(false) }
     val list = runs.orEmpty()
@@ -152,71 +172,12 @@ fun HomeScreen(nav: NavHostController, vm: HomeViewModel = hiltViewModel()) {
             }
         }
 
+        if (runs != null) PerformanceOverview(nav, list, perf, body, shoes, today)
+
         val last = list.firstOrNull()
         if (last != null) {
+            SectionHeader(stringResource(R.string.home_last_run))
             LastRunCard(last, shoes.firstOrNull { it.shoe.id == last.shoeId }?.shoe?.name) { nav.navigate(RunDetailRoute(last.id)) }
-        } else if (runs != null) {
-            GameCard(modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.home_first_title), style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(4.dp))
-                Text(stringResource(R.string.home_first_text), style = MaterialTheme.typography.bodyMedium, color = Gw.colors.muted)
-            }
-        }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            val teal = Gw.colors.goal
-            GameCard(Modifier.weight(1f), fill = teal, onClick = { nav.navigate(Vo2Route) }) {
-                val fg = teal.contentColor()
-                Text(stringResource(R.string.hub_vo2_label), style = MaterialTheme.typography.labelMedium, color = fg)
-                Text(perf?.current?.let { Format.decimal(it, 1) } ?: "--", style = NumberStyles.big, color = fg, modifier = Modifier.testTag("home_vo2"))
-                Text(
-                    perf?.change(30)?.let { (if (it >= 0) "▲ +" else "▼ ") + stringResource(R.string.vo2_change, Format.decimal(it, 1)) } ?: stringResource(R.string.home_vo2_none),
-                    style = MaterialTheme.typography.labelSmall, color = fg, maxLines = 2,
-                )
-                Spacer(Modifier.height(6.dp))
-                val trend = remember(perf) { perf?.daily?.takeLast(30)?.map { it.trend.toFloat() }.orEmpty() }
-                Sparkline(trend, fg)
-            }
-            val ws = today.weekStart()
-            val week = remember(list) {
-                (0..6).map { d -> list.filter { it.localDate.toLocalDate() == ws.plusDays(d.toLong()) }.sumOf { it.distanceM } }
-            }
-            GameCard(Modifier.weight(1f)) {
-                Text(stringResource(R.string.home_this_week), style = MaterialTheme.typography.labelMedium, color = Gw.colors.muted)
-                Text(Fmt.distanceValue(week.sum(), 1), style = NumberStyles.big)
-                Text(
-                    LocalAppSettings.current.distanceUnit.label() + " · " + stringResource(R.string.run_count, list.count { !it.localDate.toLocalDate().isBefore(ws) }),
-                    style = MaterialTheme.typography.labelSmall, color = Gw.colors.muted,
-                )
-                Spacer(Modifier.height(6.dp))
-                WeekBars(week, ChronoUnit.DAYS.between(ws, today).toInt(), Gw.colors.ink, MaterialTheme.colorScheme.primary)
-            }
-        }
-
-        if (goals.isNotEmpty()) {
-            GameCard(onClick = { nav.navigate(GoalsRoute) }, modifier = Modifier.fillMaxWidth()) {
-                goals.forEachIndexed { i, g ->
-                    if (i > 0) Spacer(Modifier.height(10.dp))
-                    GoalLine(g, vm.progress[g.id])
-                }
-            }
-        } else {
-            TextButton({ nav.navigate(GoalsRoute) }) { Text(stringResource(R.string.home_set_goal)) }
-        }
-
-        shoes.firstOrNull { it.shoe.isMain && !it.shoe.retired }?.let { main ->
-            GameCard(onClick = { nav.switchTab(ShoesRoute) }, modifier = Modifier.fillMaxWidth()) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(ShoeIcon, null, tint = MaterialTheme.colorScheme.onSurface)
-                    Spacer(Modifier.width(8.dp))
-                    Text(main.shoe.name, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-                    Text(Fmt.distance(main.stats.distanceM, 0), style = MaterialTheme.typography.labelLarge)
-                }
-                main.shoe.durabilityPct?.let {
-                    Spacer(Modifier.height(8.dp))
-                    HpBar(it, height = 12.dp)
-                }
-            }
         }
 
         GameButton(
@@ -274,5 +235,137 @@ fun goalValue(g: GoalEntity, p: GoalProgress?): String {
         GoalType.BODY_WEIGHT -> (cur?.let { Fmt.weight(it) } ?: "-") + " → " + Fmt.weight(g.target)
         GoalType.WAIST -> (cur?.let { Fmt.length(it) } ?: "-") + " → " + Fmt.length(g.target)
         else -> ""
+    }
+}
+
+/** One labelled number; shows "no data" when [value] is null. */
+@Composable
+private fun MetricTile(label: String, value: String?, modifier: Modifier = Modifier, unit: String? = null, sub: String? = null, subColor: Color? = null, onClick: (() -> Unit)? = null) {
+    GameCard(modifier, onClick = onClick, contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp)) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = Gw.colors.muted, maxLines = 1)
+        Spacer(Modifier.height(2.dp))
+        if (value == null) {
+            Text(stringResource(R.string.no_data), style = MaterialTheme.typography.titleSmall, color = Gw.colors.muted, modifier = Modifier.padding(vertical = 4.dp))
+        } else {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(value, style = NumberStyles.medium, maxLines = 1)
+                if (unit != null) Text(" $unit", style = MaterialTheme.typography.labelSmall, color = Gw.colors.muted, modifier = Modifier.padding(bottom = 2.dp))
+            }
+            if (sub != null) Text(sub, style = MaterialTheme.typography.labelSmall, color = subColor ?: Gw.colors.muted, maxLines = 1)
+        }
+    }
+}
+
+@Composable
+private fun TileRow(content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), content = content)
+}
+
+/** Current performance in every area, newest data only; empty areas say so. */
+@Composable
+private fun PerformanceOverview(
+    nav: NavHostController,
+    runs: List<RunEntity>,
+    perf: PerformanceData?,
+    body: List<BodyMetricEntity>,
+    shoes: List<ShoeWithStats>,
+    today: LocalDate,
+) {
+    val s = LocalAppSettings.current
+    val unit = s.distanceUnit.label()
+    val recent = remember(runs) { runs.filter { !it.localDate.toLocalDate().isBefore(today.minusDays(29)) } }
+    val facts = remember(runs) { runs.map { it.toFacts() } }
+
+    // Fitness
+    SectionHeader(stringResource(R.string.home_sec_fitness))
+    val vo2 = perf?.current
+    val load = perf?.load?.lastOrNull()?.takeIf { perf.runsById.isNotEmpty() }
+    TileRow {
+        MetricTile(
+            stringResource(R.string.hub_vo2_label), vo2?.let { Format.decimal(it, 1) }, Modifier.weight(1f).testTag("home_vo2"),
+            sub = perf?.level?.label(), subColor = perf?.level?.color(), onClick = { nav.navigate(Vo2Route) },
+        )
+        val state = load?.let { TrainingLoad.state(it) }
+        MetricTile(
+            stringResource(R.string.perf_form), load?.let { (if (it.form >= 0) "+" else "") + Format.decimal(it.form, 0) }, Modifier.weight(1f),
+            sub = state?.label(), subColor = state?.color(), onClick = { nav.navigate(PerformanceRoute) },
+        )
+    }
+    TileRow {
+        MetricTile(stringResource(R.string.perf_fitness), load?.let { Format.decimal(it.fitness, 0) }, Modifier.weight(1f), onClick = { nav.navigate(PerformanceRoute) })
+        MetricTile(stringResource(R.string.perf_fatigue), load?.let { Format.decimal(it.fatigue, 0) }, Modifier.weight(1f), onClick = { nav.navigate(PerformanceRoute) })
+    }
+
+    // Speed
+    SectionHeader(stringResource(R.string.home_sec_speed))
+    val pace30 = remember(recent) {
+        val timed = recent.filter { it.durationSec > 0 }
+        if (timed.isEmpty()) null else timed.sumOf { it.durationSec } / (timed.sumOf { it.distanceM } / 1000)
+    }
+    TileRow {
+        MetricTile(stringResource(R.string.home_pace_30), pace30?.let { Fmt.paceValue(it) }, Modifier.weight(1f), unit = s.distanceUnit.paceLabel())
+        val pb5 = remember(facts) { RunStats.bestTimeFor(facts, 5000.0)?.second }
+        MetricTile(stringResource(R.string.home_pb_5k), pb5?.let { Format.duration(it) }, Modifier.weight(1f), onClick = { nav.navigate(GoalsRoute) })
+    }
+    TileRow {
+        MetricTile(stringResource(R.string.home_predict_5k), vo2?.let { Format.duration(RunPaces.predictSeconds(it, 5000.0)) }, Modifier.weight(1f), onClick = { nav.navigate(PerformanceRoute) })
+        MetricTile(stringResource(R.string.home_predict_10k), vo2?.let { Format.duration(RunPaces.predictSeconds(it, 10000.0)) }, Modifier.weight(1f), onClick = { nav.navigate(PerformanceRoute) })
+    }
+
+    // Volume
+    SectionHeader(stringResource(R.string.home_sec_volume))
+    val ws = today.weekStart()
+    val weekM = remember(runs) { runs.filter { !it.localDate.toLocalDate().isBefore(ws) }.sumOf { it.distanceM } }
+    TileRow {
+        MetricTile(stringResource(R.string.home_this_week), runs.takeIf { it.isNotEmpty() }?.let { Fmt.distanceValue(weekM, 1) }, Modifier.weight(1f), unit = unit)
+        MetricTile(
+            stringResource(R.string.home_30_days), recent.takeIf { it.isNotEmpty() }?.let { Fmt.distanceValue(it.sumOf { r -> r.distanceM }, 1) }, Modifier.weight(1f),
+            unit = unit, sub = recent.takeIf { it.isNotEmpty() }?.let { stringResource(R.string.run_count, it.size) },
+        )
+    }
+    TileRow {
+        MetricTile(stringResource(R.string.home_longest_30), recent.maxOfOrNull { it.distanceM }?.let { Fmt.distanceValue(it, 2) }, Modifier.weight(1f), unit = unit)
+        val streak = remember(runs) { Streaks.current(runs.map { it.localDate.toLocalDate() }.toSet(), emptySet(), today) }
+        MetricTile(stringResource(R.string.home_streak_label), streak.takeIf { it > 0 }?.toString(), Modifier.weight(1f), unit = stringResource(R.string.unit_days))
+    }
+
+    // Heart
+    SectionHeader(stringResource(R.string.home_sec_heart))
+    val hr30 = remember(recent) { recent.mapNotNull { it.avgHr }.takeIf { it.isNotEmpty() }?.average() }
+    TileRow {
+        MetricTile(stringResource(R.string.home_hr_30), hr30?.let { Format.decimal(it, 0) }, Modifier.weight(1f), unit = "bpm")
+        MetricTile(
+            stringResource(R.string.home_efficiency), perf?.efficiency?.lastOrNull()?.second?.let { Format.decimal(it, 2) }, Modifier.weight(1f),
+            sub = stringResource(R.string.home_efficiency_unit), onClick = { nav.navigate(PerformanceRoute) },
+        )
+    }
+
+    // Body
+    if (s.bodyMetricsEnabled) {
+        SectionHeader(stringResource(R.string.home_sec_body))
+        val weights = remember(body) { body.mapNotNull { m -> m.weightKg?.let { m.date.toLocalDate() to it } } }
+        val ws2 = remember(weights, s.heightCm) { WeightTrend.stats(weights, s.heightCm, null, today) }
+        TileRow {
+            MetricTile(
+                stringResource(R.string.weight_title), ws2?.let { Fmt.weightValue(it.average7) }, Modifier.weight(1f),
+                unit = s.weightUnit.label(), sub = ws2?.let { stringResource(R.string.weight_avg7) }, onClick = { nav.navigate(BodyRoute) },
+            )
+            val cls = ws2?.bmi?.let { WeightTrend.bmiClass(it) }
+            MetricTile(stringResource(R.string.weight_bmi), ws2?.bmi?.let { Format.decimal(it, 1) }, Modifier.weight(1f), sub = cls?.label(), subColor = cls?.color(), onClick = { nav.navigate(BodyRoute) })
+        }
+    }
+
+    // Main shoe
+    SectionHeader(stringResource(R.string.home_sec_shoe))
+    val main = shoes.firstOrNull { it.shoe.isMain && !it.shoe.retired }
+    TileRow {
+        MetricTile(
+            main?.shoe?.name ?: stringResource(R.string.shoe_main), main?.let { Fmt.distanceValue(it.stats.distanceM, 0) }, Modifier.weight(1f),
+            unit = unit, sub = main?.stats?.costPerKm?.let { baht(it, 1) + stringResource(R.string.shoe_per_km_suffix) }, onClick = { nav.switchTab(ShoesRoute) },
+        )
+        MetricTile(
+            stringResource(R.string.shoe_durability), main?.shoe?.durabilityPct?.let { "$it%" }, Modifier.weight(1f),
+            sub = main?.kmLeft?.let { stringResource(R.string.shoe_km_left, Fmt.distance(it * 1000, 0)) }, onClick = { nav.switchTab(ShoesRoute) },
+        )
     }
 }

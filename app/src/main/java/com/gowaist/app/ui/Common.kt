@@ -59,11 +59,12 @@ object Fmt {
         return if (secPerKm == null) "-" else Format.pace(Pace.secPerUnit(secPerKm, unit))
     }
 
+    /** Body weight with two fixed decimals (74.15) in the user's unit. */
     @Composable
-    fun weight(kg: Double, digits: Int = 1): String {
-        val u = LocalAppSettings.current.weightUnit
-        return Format.decimal(Units.kgTo(u, kg), digits) + " " + u.label()
-    }
+    fun weightValue(kg: Double): String = String.format(java.util.Locale.US, "%.2f", Units.kgTo(LocalAppSettings.current.weightUnit, kg))
+
+    @Composable
+    fun weight(kg: Double): String = weightValue(kg) + " " + LocalAppSettings.current.weightUnit.label()
 
     @Composable
     fun length(cm: Double, digits: Int = 1): String {

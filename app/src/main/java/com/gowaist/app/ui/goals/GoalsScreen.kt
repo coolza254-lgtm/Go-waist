@@ -285,7 +285,7 @@ class GoalEditViewModel @Inject constructor(
         when (type) {
             GoalType.RUN_DISTANCE -> target = Format.decimal(fromDistance(v), 1)
             GoalType.RUN_5K_TIME -> { target = (v.toLong() / 60).toString(); targetSec = (v.toLong() % 60).toString() }
-            GoalType.BODY_WEIGHT -> target = Format.decimal(fromWeight(v), 1)
+            GoalType.BODY_WEIGHT -> target = Format.decimal(fromWeight(v), 2)
             GoalType.WAIST -> target = Format.decimal(fromLength(v), 1)
             else -> target = v.toInt().toString()
         }
@@ -294,7 +294,7 @@ class GoalEditViewModel @Inject constructor(
     suspend fun suggestBaseline() {
         val latest = body.all()
         baseline = when (type) {
-            GoalType.BODY_WEIGHT -> latest.firstOrNull { it.weightKg != null }?.weightKg?.let { Format.decimal(fromWeight(it), 1) }.orEmpty()
+            GoalType.BODY_WEIGHT -> latest.firstOrNull { it.weightKg != null }?.weightKg?.let { Format.decimal(fromWeight(it), 2) }.orEmpty()
             GoalType.WAIST -> latest.firstOrNull { it.waistCm != null }?.waistCm?.let { Format.decimal(fromLength(it), 1) }.orEmpty()
             else -> ""
         }

@@ -123,8 +123,8 @@ fun ProgressScreen(nav: NavHostController, vm: ProgressViewModel = hiltViewModel
             HubCard(stringResource(R.string.weight_title), { nav.navigate(BodyRoute) }, Modifier.testTag("progress_weight")) {
                 if (stats != null) {
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        StatBlock(stringResource(R.string.body_latest), Format.decimal(Units.kgTo(settings.weightUnit, stats.latest), 1), Modifier.weight(1f))
-                        StatBlock(stringResource(R.string.weight_avg7), Format.decimal(Units.kgTo(settings.weightUnit, stats.average7), 1), Modifier.weight(1f))
+                        StatBlock(stringResource(R.string.body_latest), Fmt.weightValue(stats.latest), Modifier.weight(1f))
+                        StatBlock(stringResource(R.string.weight_avg7), Fmt.weightValue(stats.average7), Modifier.weight(1f))
                         StatBlock(stringResource(R.string.weight_bmi), stats.bmi?.let { Format.decimal(it, 1) } ?: "-", Modifier.weight(1f))
                     }
                 } else {

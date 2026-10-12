@@ -15,6 +15,24 @@
     <string name="home_vo2_none">นำเข้าการวิ่งที่มีชีพจรเพื่อเริ่มคำนวณ</string>
     <string name="home_set_goal">+ ตั้งเป้าหมาย</string>
 
+    <string name="no_data">ไม่มีข้อมูล</string>
+    <string name="home_sec_fitness">ความฟิต</string>
+    <string name="home_sec_speed">ความเร็ว</string>
+    <string name="home_sec_volume">ปริมาณการวิ่ง</string>
+    <string name="home_sec_heart">หัวใจ</string>
+    <string name="home_sec_body">ร่างกาย</string>
+    <string name="home_sec_shoe">รองเท้าคู่หลัก</string>
+    <string name="home_pace_30">เพซเฉลี่ย 30 วัน</string>
+    <string name="home_pb_5k">5K ดีที่สุด</string>
+    <string name="home_predict_5k">คาดการณ์ 5K</string>
+    <string name="home_predict_10k">คาดการณ์ 10K</string>
+    <string name="home_30_days">30 วัน</string>
+    <string name="home_longest_30">วิ่งไกลสุด 30 วัน</string>
+    <string name="home_streak_label">วิ่งติดต่อกัน</string>
+    <string name="home_hr_30">ชีพจรเฉลี่ย 30 วัน</string>
+    <string name="home_efficiency">ประสิทธิภาพ</string>
+    <string name="home_efficiency_unit">เมตร / การเต้นหัวใจ</string>
+
     <!-- Progress -->
     <string name="progress_consistency">ความสม่ำเสมอ 16 สัปดาห์</string>
 

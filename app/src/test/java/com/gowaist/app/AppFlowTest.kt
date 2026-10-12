@@ -132,7 +132,7 @@ class AppFlowTest {
         back()
         scrollTag("progress_weight")
         tag("weight_save")
-        waitFor("70 กก.", substring = true)
+        waitFor("70.00", substring = true)
         back()
         scrollTag("progress_goals")
         waitFor("5K")

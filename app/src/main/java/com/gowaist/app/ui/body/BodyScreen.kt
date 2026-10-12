@@ -59,7 +59,8 @@ import com.gowaist.app.ui.components.StatBlock
 import com.gowaist.app.ui.theme.NumberStyles
 import com.gowaist.app.ui.components.GameButton
 import com.gowaist.app.ui.components.MultiLineChart
-import com.gowaist.app.ui.components.NumberStepper
+import com.gowaist.app.ui.components.RoundGameButton
+import androidx.compose.material.icons.rounded.Remove
 import com.gowaist.app.ui.components.Pill
 import com.gowaist.app.ui.perf.color
 import com.gowaist.app.ui.perf.label
@@ -150,7 +151,7 @@ fun BodyScreen(nav: NavHostController, vm: BodyViewModel = hiltViewModel()) {
             }
             item(key = "tiles") {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    StatTile(stringResource(R.string.body_weight), weights.lastOrNull()?.let { Format.decimal(Units.kgTo(s.weightUnit, it.second), 1) } ?: "-", Modifier.weight(1f), unit = s.weightUnit.label(), icon = Icons.Rounded.MonitorWeight, color = Gw.colors.goal)
+                    StatTile(stringResource(R.string.body_weight), weights.lastOrNull()?.let { Fmt.weightValue(it.second) } ?: "-", Modifier.weight(1f), unit = s.weightUnit.label(), icon = Icons.Rounded.MonitorWeight, color = Gw.colors.goal)
                     StatTile(stringResource(R.string.body_waist), waists.lastOrNull()?.let { Format.decimal(Units.cmTo(s.lengthUnit, it.second), 1) } ?: "-", Modifier.weight(1f), unit = s.lengthUnit.label(), icon = Icons.Rounded.Straighten, color = Gw.colors.run)
                 }
             }
@@ -270,7 +271,7 @@ private fun WeightBanner(stats: WeightStats?, goalKg: Double?) {
         Text(stringResource(R.string.body_latest), style = MaterialTheme.typography.labelMedium, color = Gw.colors.muted)
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
-                stats?.let { Format.decimal(Units.kgTo(s.weightUnit, it.latest), 1) } ?: "--",
+                stats?.let { Fmt.weightValue(it.latest) } ?: "--",
                 style = NumberStyles.huge, modifier = Modifier.testTag("weight_latest"),
             )
             Text(" " + s.weightUnit.label(), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
@@ -293,9 +294,9 @@ private fun WeightBanner(stats: WeightStats?, goalKg: Double?) {
                 else -> false
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                StatBlock(stringResource(R.string.weight_avg7), Format.decimal(Units.kgTo(s.weightUnit, stats.average7), 1), Modifier.weight(1f))
+                StatBlock(stringResource(R.string.weight_avg7), Fmt.weightValue(stats.average7), Modifier.weight(1f))
                 StatBlock(stringResource(R.string.weight_rate), stats.weeklyRate?.let { signed(Units.kgTo(s.weightUnit, it), 2) } ?: "-", Modifier.weight(1f), valueColor = toneColor(tone(stats.weeklyRate)))
-                StatBlock(stringResource(R.string.weight_change30), stats.change30?.let { signed(Units.kgTo(s.weightUnit, it), 1) } ?: "-", Modifier.weight(1f), valueColor = toneColor(tone(stats.change30)))
+                StatBlock(stringResource(R.string.weight_change30), stats.change30?.let { signed(Units.kgTo(s.weightUnit, it), 2) } ?: "-", Modifier.weight(1f), valueColor = toneColor(tone(stats.change30)))
             }
             if (stats.bmi == null) {
                 Spacer(Modifier.height(6.dp))
@@ -319,22 +320,36 @@ private fun toneColor(good: Boolean?): Color = when (good) {
     null -> MaterialTheme.colorScheme.onSurface
 }
 
-/** One-tap weigh-in: a stepper preset to the last weight (0.1 steps in the user's unit). */
+/** Quick weigh-in with two decimals (74.15): type the value or nudge it by 0.05. */
 @Composable
 private fun QuickWeight(lastKg: Double, onSave: (Double) -> Unit) {
     val s = LocalAppSettings.current
-    var value by rememberSaveable(lastKg, s.weightUnit) { mutableStateOf(Math.round(Units.kgTo(s.weightUnit, lastKg) * 10) / 10.0) }
+    fun fmt(v: Double) = String.format(java.util.Locale.US, "%.2f", v)
+    var text by rememberSaveable(lastKg, s.weightUnit) { mutableStateOf(fmt(Units.kgTo(s.weightUnit, lastKg))) }
+    val value = text.replace(',', '.').toDoubleOrNull()?.takeIf { it in 20.0..660.0 }
+    fun nudge(d: Double) {
+        val v = (value ?: Units.kgTo(s.weightUnit, lastKg)) + d
+        text = fmt((v * 100).roundToLong() / 100.0)
+    }
     GameCard(Modifier.fillMaxWidth()) {
         Text(stringResource(R.string.weight_quick), style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(6.dp))
-        NumberStepper(
-            Format.decimal(value, 1) + " " + s.weightUnit.label(), stringResource(R.string.body_weight),
-            { value = ((value - 0.1).coerceAtLeast(20.0) * 10).roundToLong() / 10.0 },
-            { value = ((value + 0.1).coerceAtMost(660.0) * 10).roundToLong() / 10.0 },
-            color = MaterialTheme.colorScheme.primary,
-        )
         Spacer(Modifier.height(8.dp))
-        GameButton(stringResource(R.string.action_save), { onSave(Units.toKg(s.weightUnit, value)) }, color = MaterialTheme.colorScheme.primary, modifier = Modifier.fillMaxWidth().testTag("weight_save"))
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            RoundGameButton(Icons.Rounded.Remove, stringResource(R.string.cd_decrease, stringResource(R.string.body_weight)), { nudge(-0.05) })
+            OutlinedTextField(
+                text, { t -> text = t.filter { it.isDigit() || it == '.' || it == ',' }.take(6) },
+                modifier = Modifier.weight(1f).testTag("weight_input"), singleLine = true,
+                textStyle = NumberStyles.big.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center),
+                suffix = { Text(s.weightUnit.label()) }, isError = value == null,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            )
+            RoundGameButton(Icons.Rounded.Add, stringResource(R.string.cd_increase, stringResource(R.string.body_weight)), { nudge(0.05) }, color = MaterialTheme.colorScheme.primary)
+        }
+        Spacer(Modifier.height(8.dp))
+        GameButton(
+            stringResource(R.string.action_save), { value?.let { onSave(Units.toKg(s.weightUnit, it)) } }, enabled = value != null,
+            modifier = Modifier.fillMaxWidth().testTag("weight_save"),
+        )
     }
 }
 
