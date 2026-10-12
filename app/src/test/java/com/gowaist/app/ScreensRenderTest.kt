@@ -93,7 +93,7 @@ class ScreensRenderTest {
         waitFor("ความทนทาน")
         back()
         click("หน้าหลัก")
-        click("นำเข้าจาก Samsung Health")
-        back()
+        waitFor("ความฟิต")
+        waitFor("ไม่มีข้อมูล")
     }
 }

@@ -89,7 +89,7 @@ class AppFlowTest {
     fun profileShoeRunAndTrackingScreens() {
         // Home, first launch
         waitFor("Go waist")
-        waitFor("ยังไม่มีการวิ่ง")
+        waitFor("ไม่มีข้อมูล")
 
         // (The profile dialog is not driven here: text fields in dialogs never go idle under Robolectric.)
         waitFor("ตั้งค่าโปรไฟล์ร่างกาย")
@@ -147,7 +147,8 @@ class AppFlowTest {
         click("รองเท้า")
         waitFor("5")
         click("หน้าหลัก")
-        rule.onNodeWithContentDescription("ตั้งค่า").performClick()
+        rule.onNodeWithContentDescription("ตั้งค่า").performScrollTo().performClick()
+        rule.waitForIdle()
         waitFor("หน่วย")
     }
 }
